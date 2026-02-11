@@ -18,6 +18,9 @@ Route::middleware('auth')->group(function () {
 
     // SubDivision Routes
     Route::resource('sub-divisions', App\Http\Controllers\SubDivisionController::class);
+
+    // Attended Routes
+    Route::resource('attendeds', App\Http\Controllers\AttendedController::class);
 });
 
 require __DIR__ . '/auth.php';

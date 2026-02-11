@@ -3,13 +3,13 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
                 <h2 class="text-2xl font-bold text-slate-800">
-                    Sub Bagian
+                    Pimpinan yang Menghadiri
                 </h2>
             </div>
 
-            <a href="{{ route('sub-divisions.create') }}"
+            <a href="{{ route('attendeds.create') }}"
                 class="inline-flex items-center justify-center bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-lg shadow-sm transition">
-                + Tambah Sub Bagian
+                + Tambah Pimpinan
             </a>
         </div>
     </x-slot>
@@ -30,30 +30,35 @@
                         <thead class="bg-slate-800 text-white">
                             <tr>
                                 <th class="px-6 py-4 text-left text-sm font-semibold">No</th>
-                                <th class="px-6 py-4 text-left text-sm font-semibold">Nama Sub Bagian</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold">Nama</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold">Pangkat / Jabatan</th>
                                 <th class="px-6 py-4 text-left text-sm font-semibold">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 bg-white">
-                            @forelse ($subDivisions as $index => $item)
+                            @forelse ($attendeds as $index => $item)
                                 <tr class="hover:bg-slate-50 transition">
                                     <td class="px-6 py-4 text-sm text-slate-600">
-                                        {{ $subDivisions->firstItem() + $index }}
+                                        {{ $attendeds->firstItem() + $index }}
                                     </td>
 
                                     <td class="px-6 py-4 text-sm font-medium text-slate-800">
                                         {{ $item->name }}
                                     </td>
 
+                                    <td class="px-6 py-4 text-sm text-slate-600">
+                                        {{ $item->rank }}
+                                    </td>
+
                                     <td class="px-6 py-4">
                                         <div class="flex flex-wrap gap-2">
-                                            <a href="{{ route('sub-divisions.edit', $item->id) }}"
+                                            <a href="{{ route('attendeds.edit', $item->id) }}"
                                                 class="inline-flex items-center px-3 py-1.5 text-xs font-medium bg-amber-500 hover:bg-amber-600 text-white rounded-md transition">
                                                 Edit
                                             </a>
 
-                                            <form action="{{ route('sub-divisions.destroy', $item->id) }}"
-                                                method="POST" onsubmit="return confirm('Yakin hapus data?')">
+                                            <form action="{{ route('attendeds.destroy', $item->id) }}" method="POST"
+                                                onsubmit="return confirm('Yakin hapus data?')">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button
@@ -66,8 +71,8 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="3" class="px-6 py-8 text-center text-slate-500">
-                                        Belum ada data sub Bagian.
+                                    <td colspan="4" class="px-6 py-8 text-center text-slate-500">
+                                        Belum ada data pimpinan.
                                     </td>
                                 </tr>
                             @endforelse
@@ -76,7 +81,7 @@
                 </div>
 
                 <div class="px-6 py-4 bg-slate-50">
-                    {{ $subDivisions->links() }}
+                    {{ $attendeds->links() }}
                 </div>
 
             </div>

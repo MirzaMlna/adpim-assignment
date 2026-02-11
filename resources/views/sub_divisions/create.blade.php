@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Tambah Sub Bidang
+            Tambah Sub Bagian
         </h2>
     </x-slot>
 
@@ -13,7 +13,7 @@
                     @csrf
 
                     <div class="mb-4">
-                        <label class="block mb-2">Nama Sub Bidang</label>
+                        <label class="block mb-2">Nama Sub Bagian</label>
                         <input type="text" name="name" class="w-full border rounded px-3 py-2"
                             value="{{ old('name') }}" required>
 
