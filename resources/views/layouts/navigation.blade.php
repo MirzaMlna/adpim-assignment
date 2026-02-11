@@ -47,6 +47,11 @@
                                 <i class="bi bi-person-badge"></i>
                                 Kehadiran Pimpinan
                             </a>
+                            <a href="{{ route('users.index') }}"
+                                class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900">
+                                <i class="bi bi-people"></i>
+                                Staff
+                            </a>
                         </div>
                     </div>
 
