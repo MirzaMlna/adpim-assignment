@@ -10,4 +10,9 @@ class Attended extends Model
         'name',
         'rank',
     ];
+
+    public function assignments()
+    {
+        return $this->hasMany(Assignment::class);
+    }
 }

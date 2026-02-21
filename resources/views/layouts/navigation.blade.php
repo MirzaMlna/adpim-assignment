@@ -55,6 +55,30 @@
                         </div>
                     </div>
 
+                    <div class="relative" x-data="{ dropdownPenugasan: false }">
+                        <button @click="dropdownPenugasan = !dropdownPenugasan"
+                            class="flex items-center gap-2 border-b-2 pb-1 transition
+        {{ request()->routeIs('assignments.*')
+            ? 'border-blue-900 text-blue-900'
+            : 'border-transparent text-gray-600 hover:text-blue-900 hover:border-blue-900' }}">
+                            <i class="bi bi-clipboard-check"></i>
+                            Penugasan
+                            <i class="bi bi-chevron-down text-xs"></i>
+                        </button>
+
+                        <div x-show="dropdownPenugasan" @click.away="dropdownPenugasan = false"
+                            class="absolute mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-100 z-50">
+
+                            <a href="{{ route('assignments.index') }}"
+                                class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900">
+                                <i class="bi bi-list-task"></i>
+                                Daftar Tugas
+                            </a>
+
+                        </div>
+                    </div>
+
+
                 </div>
             </div>
 
@@ -97,32 +121,77 @@
     </div>
 
     <!-- Mobile Menu -->
+    <!-- Mobile Menu -->
     <div x-show="open" class="sm:hidden border-t border-gray-200 bg-white">
 
         <div class="px-4 py-3 space-y-2 text-sm">
 
+            <!-- Dashboard -->
             <a href="{{ route('dashboard') }}" class="flex items-center gap-2 py-2 text-gray-700 hover:text-blue-900">
                 <i class="bi bi-speedometer2"></i>
                 Dashboard
             </a>
 
-            <div class="pt-3 text-xs font-semibold text-gray-400 uppercase">
-                Data
+            <!-- Data Dropdown -->
+            <div x-data="{ dataOpen: false }" class="border-t pt-3">
+
+                <button @click="dataOpen = !dataOpen"
+                    class="flex items-center justify-between w-full py-2 text-gray-700 hover:text-blue-900">
+                    <span class="flex items-center gap-2">
+                        <i class="bi bi-gear"></i>
+                        Data
+                    </span>
+                    <i class="bi" :class="dataOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                </button>
+
+                <div x-show="dataOpen" class="pl-6 mt-2 space-y-2">
+
+                    <a href="{{ route('sub-divisions.index') }}"
+                        class="flex items-center gap-2 py-1 text-gray-700 hover:text-blue-900">
+                        <i class="bi bi-diagram-3"></i>
+                        Sub Bidang
+                    </a>
+
+                    <a href="{{ route('attendeds.index') }}"
+                        class="flex items-center gap-2 py-1 text-gray-700 hover:text-blue-900">
+                        <i class="bi bi-person-badge"></i>
+                        Kehadiran Pimpinan
+                    </a>
+
+                    <a href="{{ route('users.index') }}"
+                        class="flex items-center gap-2 py-1 text-gray-700 hover:text-blue-900">
+                        <i class="bi bi-people"></i>
+                        Staff
+                    </a>
+
+                </div>
             </div>
 
-            <a href="{{ route('sub-divisions.index') }}"
-                class="flex items-center gap-2 py-2 text-gray-700 hover:text-blue-900">
-                <i class="bi bi-diagram-3"></i>
-                Sub Bidang
-            </a>
+            <!-- Penugasan Dropdown -->
+            <div x-data="{ tugasOpen: false }" class="border-t pt-3">
 
-            <a href="{{ route('attendeds.index') }}"
-                class="flex items-center gap-2 py-2 text-gray-700 hover:text-blue-900">
-                <i class="bi bi-person-badge"></i>
-                Kehadiran Pimpinan
-            </a>
+                <button @click="tugasOpen = !tugasOpen"
+                    class="flex items-center justify-between w-full py-2 text-gray-700 hover:text-blue-900">
+                    <span class="flex items-center gap-2">
+                        <i class="bi bi-clipboard-check"></i>
+                        Penugasan
+                    </span>
+                    <i class="bi" :class="tugasOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                </button>
 
-            <div class="border-t pt-3 mt-3">
+                <div x-show="tugasOpen" class="pl-6 mt-2 space-y-2">
+
+                    <a href="{{ route('assignments.index') }}"
+                        class="flex items-center gap-2 py-1 text-gray-700 hover:text-blue-900">
+                        <i class="bi bi-list-task"></i>
+                        Daftar Tugas
+                    </a>
+
+                </div>
+            </div>
+
+            <!-- Profile Section -->
+            <div class="border-t pt-4 mt-4">
                 <div class="text-gray-800 font-medium">{{ Auth::user()->name }}</div>
                 <div class="text-gray-500 text-xs">{{ Auth::user()->email }}</div>
 
