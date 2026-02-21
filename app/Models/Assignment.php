@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class Assignment extends Model
 {
     protected $fillable = [
-        'attended_id',
         'code',
         'title',
         'agency',
@@ -20,13 +19,8 @@ class Assignment extends Model
         'description'
     ];
 
-    public function attended()
+    public function attendeds()
     {
-        return $this->belongsTo(Attended::class);
-    }
-
-    public function getTotalFeeAttribute()
-    {
-        return $this->day_count * $this->fee_per_day;
+        return $this->belongsToMany(Attended::class);
     }
 }

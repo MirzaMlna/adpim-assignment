@@ -25,24 +25,16 @@
                             <label class="block text-sm font-medium text-slate-700 mb-2">
                                 Pimpinan
                             </label>
-                            <select name="attended_id"
+                            <select name="attended_ids[]" multiple required
                                 class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
                                 @foreach ($attendeds as $att)
-                                    <option value="{{ $att->id }}"
-                                        {{ $assignment->attended_id == $att->id ? 'selected' : '' }}>
+                                    <option value="{{ $att->id }}">
                                         {{ $att->name }}
                                     </option>
                                 @endforeach
                             </select>
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">
-                                Kode Tugas
-                            </label>
-                            <input type="text" name="code" value="{{ old('code', $assignment->code) }}"
-                                class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
-                        </div>
 
                         <div class="md:col-span-2">
                             <label class="block text-sm font-medium text-slate-700 mb-2">
@@ -98,8 +90,25 @@
                             <label class="block text-sm font-medium text-slate-700 mb-2">
                                 Lokasi (Kab/Kota)
                             </label>
-                            <input type="text" name="location" value="{{ old('location', $assignment->location) }}"
+                            <select name="location"
                                 class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
+
+                                <option value="{{ old('location', $assignment->location) }}">
+                                    {{ old('location', $assignment->location) }}</option>
+                                <option value="Banjarmasin">Kota Banjarmasin</option>
+                                <option value="Banjarbaru">Kota Banjarbaru</option>
+                                <option value="Banjar">Kabupaten Banjar</option>
+                                <option value="Barito Kuala">Kabupaten Barito Kuala</option>
+                                <option value="Tapin">Kabupaten Tapin</option>
+                                <option value="Hulu Sungai Selatan">Kabupaten Hulu Sungai Selatan</option>
+                                <option value="Hulu Sungai Tengah">Kabupaten Hulu Sungai Tengah</option>
+                                <option value="Hulu Sungai Utara">Kabupaten Hulu Sungai Utara</option>
+                                <option value="Tabalong">Kabupaten Tabalong</option>
+                                <option value="Tanah Laut">Kabupaten Tanah Laut</option>
+                                <option value="Tanah Bumbu">Kabupaten Tanah Bumbu</option>
+                                <option value="Kotabaru">Kabupaten Kotabaru</option>
+                                <option value="Balangan">Kabupaten Balangan</option>
+                            </select>
                         </div>
 
                         <div>

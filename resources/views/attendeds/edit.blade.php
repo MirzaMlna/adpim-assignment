@@ -45,6 +45,20 @@
                         @enderror
                     </div>
 
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">
+                            Singkatan Pangkat
+                        </label>
+                        <input type="text" name="rank_abbreviation"
+                            value="{{ old('rank_abbreviation', $attended->rank_abbreviation) }}"
+                            class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800"
+                            required>
+
+                        @error('rank_abbreviation')
+                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <div class="flex justify-end gap-3 pt-4">
                         <a href="{{ route('attendeds.index') }}"
                             class="px-4 py-2 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 transition">

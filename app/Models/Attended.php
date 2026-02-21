@@ -9,10 +9,11 @@ class Attended extends Model
     protected $fillable = [
         'name',
         'rank',
+        'rank_abbreviation'
     ];
 
     public function assignments()
     {
-        return $this->hasMany(Assignment::class);
+        return $this->belongsToMany(Assignment::class);
     }
 }

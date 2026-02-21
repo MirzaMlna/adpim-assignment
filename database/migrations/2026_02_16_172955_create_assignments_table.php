@@ -9,10 +9,6 @@ return new class extends Migration {
     {
         Schema::create('assignments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('attended_id')
-                ->constrained('attendeds')
-                ->cascadeOnDelete();
-
             $table->string('code')->unique();
             $table->string('title');
             $table->string('agency');

@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('rank');
+            $table->string('rank_abbreviation');
             $table->timestamps();
         });
     }

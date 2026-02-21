@@ -23,6 +23,7 @@ class AttendedController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'rank' => 'required|string|max:255',
+            'rank_abbreviation' => 'required|string|max:255',
         ]);
 
         Attended::create($request->all());
@@ -41,6 +42,7 @@ class AttendedController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'rank' => 'required|string|max:255',
+            'rank_abbreviation' => 'required|string|max:255',
         ]);
 
         $attended->update($request->all());

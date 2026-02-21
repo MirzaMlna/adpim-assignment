@@ -10,7 +10,7 @@ class AssignmentController extends Controller
 {
     public function index()
     {
-        $assignments = Assignment::with('attended')
+        $assignments = Assignment::with('attendeds')
             ->latest()
             ->paginate(10);
 
@@ -26,8 +26,8 @@ class AssignmentController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'attended_id' => 'required',
-            'code' => 'required|unique:assignments',
+            'attended_ids' => 'required|array',
+            'attended_ids.*' => 'exists:attendeds,id',
             'title' => 'required',
             'agency' => 'required',
             'date' => 'required|date',
@@ -35,7 +35,26 @@ class AssignmentController extends Controller
             'fee_per_day' => 'required|numeric'
         ]);
 
-        Assignment::create($request->all());
+        $datePart = date('dmY', strtotime($request->date));
+        $last = Assignment::whereDate('date', $request->date)->count() + 1;
+        $increment = str_pad($last, 3, '0', STR_PAD_LEFT);
+
+        $code = "GIAT-{$datePart}-{$increment}";
+
+        $assignment = Assignment::create([
+            'code' => $code,
+            'title' => $request->title,
+            'agency' => $request->agency,
+            'date' => $request->date,
+            'time' => $request->time,
+            'day_count' => $request->day_count ?? 1,
+            'location' => $request->location,
+            'location_detail' => $request->location_detail,
+            'fee_per_day' => $request->fee_per_day,
+            'description' => $request->description,
+        ]);
+
+        $assignment->attendeds()->attach($request->attended_ids);
 
         return redirect()->route('assignments.index')
             ->with('success', 'Data tugas berhasil ditambahkan');
@@ -50,8 +69,8 @@ class AssignmentController extends Controller
     public function update(Request $request, Assignment $assignment)
     {
         $request->validate([
-            'attended_id' => 'required',
-            'code' => 'required|unique:assignments,code,' . $assignment->id,
+            'attended_ids' => 'required|array',
+            'attended_ids.*' => 'exists:attendeds,id',
             'title' => 'required',
             'agency' => 'required',
             'date' => 'required|date',
@@ -59,10 +78,19 @@ class AssignmentController extends Controller
             'fee_per_day' => 'required|numeric'
         ]);
 
-        $assignment->update($request->all());
+        $assignment->update($request->except('attended_ids'));
+
+        $assignment->attendeds()->sync($request->attended_ids);
 
         return redirect()->route('assignments.index')
             ->with('success', 'Data tugas berhasil diperbarui');
+    }
+
+    public function show(Assignment $assignment)
+    {
+        $assignment->load('attendeds');
+
+        return view('assignments.show', compact('assignment'));
     }
 
     public function destroy(Assignment $assignment)

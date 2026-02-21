@@ -21,45 +21,83 @@
                 </div>
             @endif
 
-            <div class="bg-white rounded-2xl shadow-sm border p-6">
+            <div class="bg-white rounded-2xl shadow-sm border">
 
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-slate-200">
+                    <table class="min-w-full text-sm ">
                         <thead class="bg-slate-800 text-white">
                             <tr>
                                 <th class="px-4 py-3 text-left">Kode</th>
                                 <th class="px-4 py-3 text-left">Judul</th>
                                 <th class="px-4 py-3 text-left">Pimpinan</th>
                                 <th class="px-4 py-3 text-left">Tanggal</th>
-                                <th class="px-4 py-3 text-left">Total Biaya</th>
-                                <th class="px-4 py-3 text-left">Aksi</th>
+                                <th class="px-4 py-3 text-left">Per hari</th>
+                                <th class="px-4 py-3 text-left w-40">Aksi</th>
                             </tr>
                         </thead>
+
                         <tbody class="divide-y">
                             @forelse($assignments as $item)
-                                <tr class="hover:bg-slate-50">
-                                    <td class="px-4 py-3">{{ $item->code }}</td>
-                                    <td class="px-4 py-3">{{ $item->title }}</td>
-                                    <td class="px-4 py-3">{{ $item->attended->name }}</td>
-                                    <td class="px-4 py-3">{{ $item->date }}</td>
-                                    <td class="px-4 py-3">
-                                        Rp {{ number_format($item->total_fee, 0, ',', '.') }}
-                                    </td>
-                                    <td class="px-4 py-3 flex gap-2">
-                                        <a href="{{ route('assignments.edit', $item->id) }}"
-                                            class="px-3 py-1 bg-amber-500 text-white rounded-md">
-                                            Edit
-                                        </a>
+                                <tr class="hover:bg-slate-50 align-middle">
 
-                                        <form action="{{ route('assignments.destroy', $item->id) }}" method="POST"
-                                            onsubmit="return confirm('Hapus data?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button class="px-3 py-1 bg-red-600 text-white rounded-md">
-                                                Hapus
-                                            </button>
-                                        </form>
+                                    <td class="px-4 py-3 font-semibold text-slate-700">
+                                        {{ $item->code }}
                                     </td>
+
+                                    <td class="px-4 py-3">
+                                        <div class="font-medium text-slate-800">
+                                            {{ $item->title }}
+                                        </div>
+                                        <div class="text-xs text-slate-500">
+                                            {{ $item->agency }}
+                                        </div>
+                                    </td>
+
+                                    <td class="px-4 py-3">
+                                        <div class="flex flex-col gap-1">
+                                            @foreach ($item->attendeds as $att)
+                                                <span class="inline-block bg-slate-200 px-2 py-1 rounded text-xs">
+                                                    {{ $att->rank_abbreviation }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    </td>
+
+                                    <td class="px-4 py-3 text-slate-600">
+                                        {{ \Carbon\Carbon::parse($item->date)->format('d M Y') }}
+                                        <br>
+                                        <span class="text-xs text-slate-500">
+                                            {{ \Carbon\Carbon::parse($item->time)->format('H:i') }} WITA
+                                        </span>
+                                    </td>
+
+                                    <td class="px-4 py-3 font-semibold text-slate-700">
+                                        Rp{{ number_format($item->fee_per_day, 0, ',', '.') }}
+                                    </td>
+
+                                    <td class="px-4 py-3">
+                                        <div class="flex gap-2">
+                                            <a href="{{ route('assignments.show', $item->id) }}"
+                                                class="px-3 py-1 bg-blue-600 text-white rounded-md text-xs">
+                                                Detail
+                                            </a>
+
+                                            <a href="{{ route('assignments.edit', $item->id) }}"
+                                                class="px-3 py-1 bg-amber-500 text-white rounded-md text-xs">
+                                                Edit
+                                            </a>
+
+                                            <form action="{{ route('assignments.destroy', $item->id) }}" method="POST"
+                                                onsubmit="return confirm('Hapus data?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button class="px-3 py-1 bg-red-600 text-white rounded-md text-xs">
+                                                    Hapus
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+
                                 </tr>
                             @empty
                                 <tr>
@@ -72,7 +110,7 @@
                     </table>
                 </div>
 
-                <div class="mt-4">
+                <div class="p-4">
                     {{ $assignments->links() }}
                 </div>
 
