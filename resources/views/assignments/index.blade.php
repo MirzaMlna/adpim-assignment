@@ -31,6 +31,7 @@
                                 <th class="px-4 py-3 text-left">Judul</th>
                                 <th class="px-4 py-3 text-left">Pimpinan</th>
                                 <th class="px-4 py-3 text-left">Tanggal</th>
+                                <th class="px-4 py-3 text-left">Klasifikasi Wilayah</th>
                                 <th class="px-4 py-3 text-left">Per hari</th>
                                 <th class="px-4 py-3 text-left w-40">Aksi</th>
                             </tr>
@@ -69,6 +70,22 @@
                                         <span class="text-xs text-slate-500">
                                             {{ \Carbon\Carbon::parse($item->time)->format('H:i') }} WITA
                                         </span>
+                                    </td>
+
+                                    <td class="px-4 py-3 text-center">
+                                        @if ($item->region_classification == 'dalam_daerah')
+                                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">Dalam
+                                                Daerah</span>
+                                        @elseif($item->region_classification == 'dalam_daerah_kabupaten')
+                                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Dalam
+                                                Daerah Kabupaten</span>
+                                        @else
+                                            <span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">Luar
+                                                Daerah</span>
+                                        @endif
+                                        <br>
+                                        <span class="text-xs text-slate-500">
+                                            {{ $item->location }}
                                     </td>
 
                                     <td class="px-4 py-3 font-semibold text-slate-700">

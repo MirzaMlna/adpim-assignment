@@ -32,7 +32,8 @@ class AssignmentController extends Controller
             'agency' => 'required',
             'date' => 'required|date',
             'time' => 'required',
-            'fee_per_day' => 'required|numeric'
+            'fee_per_day' => 'required|numeric',
+            'region_classification' => 'required|in:dalam_daerah,dalam_daerah_kabupaten,luar_daerah'
         ]);
 
         $datePart = date('dmY', strtotime($request->date));
@@ -52,6 +53,7 @@ class AssignmentController extends Controller
             'location_detail' => $request->location_detail,
             'fee_per_day' => $request->fee_per_day,
             'description' => $request->description,
+            'region_classification' => $request->region_classification,
         ]);
 
         $assignment->attendeds()->attach($request->attended_ids);
@@ -75,7 +77,8 @@ class AssignmentController extends Controller
             'agency' => 'required',
             'date' => 'required|date',
             'time' => 'required',
-            'fee_per_day' => 'required|numeric'
+            'fee_per_day' => 'required|numeric',
+            'region_classification' => 'required|in:dalam_daerah,dalam_daerah_kabupaten,luar_daerah'
         ]);
 
         $assignment->update($request->except('attended_ids'));

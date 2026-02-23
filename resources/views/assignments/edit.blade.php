@@ -20,19 +20,99 @@
                     @method('PUT')
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">
+                                Klasifikasi Wilayah
+                            </label>
+                            <select id="region_classification" name="region_classification" required
+                                class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
+                                <option value="dalam_daerah"
+                                    {{ old('region_classification', $assignment->region_classification) == 'dalam_daerah' ? 'selected' : '' }}>
+                                    Dalam Daerah</option>
+                                <option value="dalam_daerah_kabupaten"
+                                    {{ old('region_classification', $assignment->region_classification) == 'dalam_daerah_kabupaten' ? 'selected' : '' }}>
+                                    Dalam Daerah Kabupaten</option>
+                                <option value="luar_daerah"
+                                    {{ old('region_classification', $assignment->region_classification) == 'luar_daerah' ? 'selected' : '' }}>
+                                    Luar Daerah</option>
+                            </select>
+                        </div>
+
+                        <div id="wilayah_dalam_daerah" style="display:none;">
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Wilayah Dalam Daerah</label>
+                            <select name="location"
+                                class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
+                                <option value="Banjarmasin"
+                                    {{ old('location', $assignment->location) == 'Banjarmasin' ? 'selected' : '' }}>Kota
+                                    Banjarmasin</option>
+                                <option value="Banjarbaru"
+                                    {{ old('location', $assignment->location) == 'Banjarbaru' ? 'selected' : '' }}>Kota
+                                    Banjarbaru</option>
+                                <option value="Banjar"
+                                    {{ old('location', $assignment->location) == 'Banjar' ? 'selected' : '' }}>Kabupaten
+                                    Banjar</option>
+                                <option value="Barito Kuala"
+                                    {{ old('location', $assignment->location) == 'Barito Kuala' ? 'selected' : '' }}>
+                                    Kabupaten Barito Kuala</option>
+                            </select>
+                        </div>
+
+                        <div id="wilayah_dalam_daerah_kabupaten" style="display:none;">
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Wilayah Dalam Daerah
+                                Kabupaten</label>
+                            <select name="location"
+                                class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
+                                <option value="Hulu Sungai Selatan"
+                                    {{ old('location', $assignment->location) == 'Hulu Sungai Selatan' ? 'selected' : '' }}>
+                                    Kabupaten Hulu Sungai Selatan</option>
+                                <option value="Hulu Sungai Tengah"
+                                    {{ old('location', $assignment->location) == 'Hulu Sungai Tengah' ? 'selected' : '' }}>
+                                    Kabupaten Hulu Sungai Tengah</option>
+                                <option value="Hulu Sungai Utara"
+                                    {{ old('location', $assignment->location) == 'Hulu Sungai Utara' ? 'selected' : '' }}>
+                                    Kabupaten Hulu Sungai Utara</option>
+                                <option value="Balangan"
+                                    {{ old('location', $assignment->location) == 'Balangan' ? 'selected' : '' }}>
+                                    Kabupaten Balangan</option>
+                                <option value="Kotabaru"
+                                    {{ old('location', $assignment->location) == 'Kotabaru' ? 'selected' : '' }}>
+                                    Kabupaten Kotabaru</option>
+                                <option value="Tabalong"
+                                    {{ old('location', $assignment->location) == 'Tabalong' ? 'selected' : '' }}>
+                                    Kabupaten Tabalong</option>
+                                <option value="Tanah Laut"
+                                    {{ old('location', $assignment->location) == 'Tanah Laut' ? 'selected' : '' }}>
+                                    Kabupaten Tanah Laut</option>
+                                <option value="Tanah Bumbu"
+                                    {{ old('location', $assignment->location) == 'Tanah Bumbu' ? 'selected' : '' }}>
+                                    Kabupaten Tanah Bumbu</option>
+                                <option value="Tapin"
+                                    {{ old('location', $assignment->location) == 'Tapin' ? 'selected' : '' }}>Kabupaten
+                                    Tapin</option>
+                            </select>
+                        </div>
+
+                        <div id="wilayah_luar_daerah" style="display:none;">
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Wilayah Luar Daerah</label>
+                            <input type="text" name="location" value="{{ old('location', $assignment->location) }}"
+                                placeholder="Nama Provinsi/Kota"
+                                class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
+                        </div>
 
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-2">
                                 Pimpinan
                             </label>
-                            <select name="attended_ids[]" multiple required
-                                class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
+                            <div class="w-full rounded-lg border-slate-300">
                                 @foreach ($attendeds as $att)
-                                    <option value="{{ $att->id }}">
-                                        {{ $att->name }}
-                                    </option>
+                                    <label class="flex items-center mb-1">
+                                        <input type="checkbox" name="attended_ids[]" value="{{ $att->id }}"
+                                            class="mr-2 rounded border-slate-300 focus:border-slate-800 focus:ring-slate-800"
+                                            {{ in_array($att->id, old('attended_ids', $assignment->attendeds->pluck('id')->toArray() ?? [])) ? 'checked' : '' }}>
+                                        <span>{{ $att->name }}</span>
+                                    </label>
                                 @endforeach
-                            </select>
+                            </div>
                         </div>
 
 
@@ -88,31 +168,6 @@
 
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-2">
-                                Lokasi (Kab/Kota)
-                            </label>
-                            <select name="location"
-                                class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
-
-                                <option value="{{ old('location', $assignment->location) }}">
-                                    {{ old('location', $assignment->location) }}</option>
-                                <option value="Banjarmasin">Kota Banjarmasin</option>
-                                <option value="Banjarbaru">Kota Banjarbaru</option>
-                                <option value="Banjar">Kabupaten Banjar</option>
-                                <option value="Barito Kuala">Kabupaten Barito Kuala</option>
-                                <option value="Tapin">Kabupaten Tapin</option>
-                                <option value="Hulu Sungai Selatan">Kabupaten Hulu Sungai Selatan</option>
-                                <option value="Hulu Sungai Tengah">Kabupaten Hulu Sungai Tengah</option>
-                                <option value="Hulu Sungai Utara">Kabupaten Hulu Sungai Utara</option>
-                                <option value="Tabalong">Kabupaten Tabalong</option>
-                                <option value="Tanah Laut">Kabupaten Tanah Laut</option>
-                                <option value="Tanah Bumbu">Kabupaten Tanah Bumbu</option>
-                                <option value="Kotabaru">Kabupaten Kotabaru</option>
-                                <option value="Balangan">Kabupaten Balangan</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">
                                 Detail Lokasi
                             </label>
                             <input type="text" name="location_detail"
@@ -143,6 +198,28 @@
                     </div>
 
                 </form>
+                <script>
+                    const regionSelect = document.getElementById('region_classification');
+                    const dalamDaerah = document.getElementById('wilayah_dalam_daerah');
+                    const dalamDaerahKab = document.getElementById('wilayah_dalam_daerah_kabupaten');
+                    const luarDaerah = document.getElementById('wilayah_luar_daerah');
+
+                    function showWilayah() {
+                        dalamDaerah.style.display = 'none';
+                        dalamDaerahKab.style.display = 'none';
+                        luarDaerah.style.display = 'none';
+                        if (regionSelect.value === 'dalam_daerah') {
+                            dalamDaerah.style.display = 'block';
+                        } else if (regionSelect.value === 'dalam_daerah_kabupaten') {
+                            dalamDaerahKab.style.display = 'block';
+                        } else if (regionSelect.value === 'luar_daerah') {
+                            luarDaerah.style.display = 'block';
+                        }
+                    }
+                    regionSelect.addEventListener('change', showWilayah);
+                    // Set initial state
+                    showWilayah();
+                </script>
 
             </div>
         </div>

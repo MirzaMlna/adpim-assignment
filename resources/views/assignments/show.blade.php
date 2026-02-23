@@ -35,6 +35,19 @@
                     </div>
 
                     <div>
+                        <p class="text-slate-500">Klasifikasi Wilayah</p>
+                        <p class="font-medium">
+                            @if ($assignment->region_classification == 'dalam_daerah')
+                                Dalam Daerah (Banjarmasin, Banjarbaru, Banjar, Barito Kuala)
+                            @elseif($assignment->region_classification == 'dalam_daerah_kabupaten')
+                                Dalam Daerah Kabupaten (HSS, HST, HSU, BLG, KTB, TANBU, TALA, TAPIN, TBL)
+                            @else
+                                Luar Daerah (Provinsi di luar Kalimantan Selatan)
+                            @endif
+                        </p>
+                    </div>
+
+                    <div>
                         <p class="text-slate-500">Lokasi</p>
                         <p class="font-medium">
                             {{ $assignment->location }}

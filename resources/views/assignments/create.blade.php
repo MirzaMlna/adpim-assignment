@@ -19,19 +19,66 @@
                     @csrf
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">
+                                Klasifikasi Wilayah
+                            </label>
+                            <select id="region_classification" name="region_classification" required
+                                class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
+                                <option value="dalam_daerah">Dalam Daerah</option>
+                                <option value="dalam_daerah_kabupaten">Dalam Daerah Kabupaten</option>
+                                <option value="luar_daerah">Luar Daerah</option>
+                            </select>
+                        </div>
+
+                        <div id="wilayah_dalam_daerah" style="display:none;">
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Wilayah Dalam Daerah</label>
+                            <select name="location"
+                                class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
+                                <option value="Banjarmasin">Kota Banjarmasin</option>
+                                <option value="Banjarbaru">Kota Banjarbaru</option>
+                                <option value="Banjar">Kabupaten Banjar</option>
+                                <option value="Barito Kuala">Kabupaten Barito Kuala</option>
+                            </select>
+                        </div>
+
+                        <div id="wilayah_dalam_daerah_kabupaten" style="display:none;">
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Wilayah Dalam Daerah
+                                Kabupaten</label>
+                            <select name="location"
+                                class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
+                                <option value="Hulu Sungai Selatan">Kabupaten Hulu Sungai Selatan</option>
+                                <option value="Hulu Sungai Tengah">Kabupaten Hulu Sungai Tengah</option>
+                                <option value="Hulu Sungai Utara">Kabupaten Hulu Sungai Utara</option>
+                                <option value="Balangan">Kabupaten Balangan</option>
+                                <option value="Kotabaru">Kabupaten Kotabaru</option>
+                                <option value="Tabalong">Kabupaten Tabalong</option>
+                                <option value="Tanah Laut">Kabupaten Tanah Laut</option>
+                                <option value="Tanah Bumbu">Kabupaten Tanah Bumbu</option>
+                                <option value="Tapin">Kabupaten Tapin</option>
+                            </select>
+                        </div>
+
+                        <div id="wilayah_luar_daerah" style="display:none;">
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Wilayah Luar Daerah</label>
+                            <input type="text" name="location" placeholder="Nama Provinsi/Kota"
+                                class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
+                        </div>
 
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-2">
                                 Pimpinan
                             </label>
-                            <select name="attended_ids[]" multiple required
-                                class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
+                            <div class="w-full rounded-lg border-slate-300">
                                 @foreach ($attendeds as $att)
-                                    <option value="{{ $att->id }}">
-                                        {{ $att->name }}
-                                    </option>
+                                    <label class="flex items-center mb-1">
+                                        <input type="checkbox" name="attended_ids[]" value="{{ $att->id }}"
+                                            class="mr-2 rounded border-slate-300 focus:border-slate-800 focus:ring-slate-800"
+                                            {{ in_array($att->id, old('attended_ids', [])) ? 'checked' : '' }}>
+                                        <span>{{ $att->name }}</span>
+                                    </label>
                                 @endforeach
-                            </select>
+                            </div>
                         </div>
 
 
@@ -92,30 +139,6 @@
 
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-2">
-                                Lokasi (Kab/Kota)
-                            </label>
-                            <select name="location"
-                                class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
-
-                                <option value="">-- Pilih Kab/Kota --</option>
-                                <option value="Banjarmasin">Kota Banjarmasin</option>
-                                <option value="Banjarbaru">Kota Banjarbaru</option>
-                                <option value="Banjar">Kabupaten Banjar</option>
-                                <option value="Barito Kuala">Kabupaten Barito Kuala</option>
-                                <option value="Tapin">Kabupaten Tapin</option>
-                                <option value="Hulu Sungai Selatan">Kabupaten Hulu Sungai Selatan</option>
-                                <option value="Hulu Sungai Tengah">Kabupaten Hulu Sungai Tengah</option>
-                                <option value="Hulu Sungai Utara">Kabupaten Hulu Sungai Utara</option>
-                                <option value="Tabalong">Kabupaten Tabalong</option>
-                                <option value="Tanah Laut">Kabupaten Tanah Laut</option>
-                                <option value="Tanah Bumbu">Kabupaten Tanah Bumbu</option>
-                                <option value="Kotabaru">Kabupaten Kotabaru</option>
-                                <option value="Balangan">Kabupaten Balangan</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">
                                 Detail Lokasi
                             </label>
                             <input type="text" name="location_detail" value="{{ old('location_detail') }}"
@@ -145,6 +168,26 @@
                     </div>
 
                 </form>
+                <script>
+                    const regionSelect = document.getElementById('region_classification');
+                    const dalamDaerah = document.getElementById('wilayah_dalam_daerah');
+                    const dalamDaerahKab = document.getElementById('wilayah_dalam_daerah_kabupaten');
+                    const luarDaerah = document.getElementById('wilayah_luar_daerah');
+                    regionSelect.addEventListener('change', function() {
+                        dalamDaerah.style.display = 'none';
+                        dalamDaerahKab.style.display = 'none';
+                        luarDaerah.style.display = 'none';
+                        if (this.value === 'dalam_daerah') {
+                            dalamDaerah.style.display = 'block';
+                        } else if (this.value === 'dalam_daerah_kabupaten') {
+                            dalamDaerahKab.style.display = 'block';
+                        } else if (this.value === 'luar_daerah') {
+                            luarDaerah.style.display = 'block';
+                        }
+                    });
+                    // Set initial state
+                    regionSelect.dispatchEvent(new Event('change'));
+                </script>
 
             </div>
         </div>

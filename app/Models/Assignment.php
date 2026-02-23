@@ -16,7 +16,8 @@ class Assignment extends Model
         'location',
         'location_detail',
         'fee_per_day',
-        'description'
+        'description',
+        'region_classification'
     ];
 
     public function attendeds()
