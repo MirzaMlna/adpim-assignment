@@ -31,18 +31,23 @@
                     @csrf
 
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">
-                            User (1 s.d 5 orang)
+                        <label class="block text-sm font-medium text-slate-700 mb-2">
+                            User (maksimal 5 orang)
                         </label>
-                        <select name="user_id[]" multiple size="5"
+
+                        <select id="user_ids" name="user_id[]" multiple
                             class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
                             @foreach ($users as $user)
-                                <option value="{{ $user->id }}" {{ (collect(old('user_id'))->contains($user->id)) ? 'selected' : '' }}>
+                                <option value="{{ $user->id }}"
+                                    {{ collect(old('user_id'))->contains($user->id) ? 'selected' : '' }}>
                                     {{ $user->name }}
                                 </option>
                             @endforeach
                         </select>
-                        <div class="text-xs text-slate-500 mt-1">Tekan Ctrl (atau Cmd di Mac) untuk memilih lebih dari satu user.</div>
+
+                        <p class="text-xs text-slate-500 mt-1">
+                            Bisa mencari nama dan memilih lebih dari satu.
+                        </p>
                     </div>
 
                     <div class="mb-4">
@@ -97,4 +102,17 @@
             </div>
         </div>
     </div>
+
+    <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+
+    <script>
+        new TomSelect("#user_ids", {
+            plugins: ['remove_button'],
+            placeholder: "Pilih user...",
+            maxItems: 5,
+            persist: false,
+            create: false,
+        });
+    </script>
 </x-app-layout>

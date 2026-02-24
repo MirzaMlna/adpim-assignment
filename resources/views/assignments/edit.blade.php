@@ -1,4 +1,5 @@
 <x-app-layout>
+    <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
     <x-slot name="header">
         <div>
             <h2 class="text-2xl font-bold text-slate-800">
@@ -103,16 +104,16 @@
                             <label class="block text-sm font-medium text-slate-700 mb-2">
                                 Pimpinan
                             </label>
-                            <div class="w-full rounded-lg border-slate-300">
+
+                            <select id="attended_ids" name="attended_ids[]" multiple
+                                class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
                                 @foreach ($attendeds as $att)
-                                    <label class="flex items-center mb-1">
-                                        <input type="checkbox" name="attended_ids[]" value="{{ $att->id }}"
-                                            class="mr-2 rounded border-slate-300 focus:border-slate-800 focus:ring-slate-800"
-                                            {{ in_array($att->id, old('attended_ids', $assignment->attendeds->pluck('id')->toArray() ?? [])) ? 'checked' : '' }}>
-                                        <span>{{ $att->name }}</span>
-                                    </label>
+                                    <option value="{{ $att->id }}"
+                                        {{ in_array($att->id, old('attended_ids', $assignment->attendeds->pluck('id')->toArray())) ? 'selected' : '' }}>
+                                        {{ $att->name }}
+                                    </option>
                                 @endforeach
-                            </div>
+                            </select>
                         </div>
 
 
@@ -198,6 +199,8 @@
                     </div>
 
                 </form>
+                <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+
                 <script>
                     const regionSelect = document.getElementById('region_classification');
                     const dalamDaerah = document.getElementById('wilayah_dalam_daerah');
@@ -219,6 +222,13 @@
                     regionSelect.addEventListener('change', showWilayah);
                     // Set initial state
                     showWilayah();
+
+                    new TomSelect("#attended_ids", {
+                        plugins: ['remove_button'],
+                        placeholder: "Pilih pimpinan...",
+                        persist: false,
+                        create: false,
+                    });
                 </script>
 
             </div>
