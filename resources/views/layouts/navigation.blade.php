@@ -74,6 +74,11 @@
                                 <i class="bi bi-list-task"></i>
                                 Daftar Tugas
                             </a>
+                            <a href="{{ route('assignment-users.index') }}"
+                                class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900">
+                                <i class="bi bi-person-check"></i>
+                                Assignment Users
+                            </a>
 
                         </div>
                     </div>
@@ -186,7 +191,11 @@
                         <i class="bi bi-list-task"></i>
                         Daftar Tugas
                     </a>
-
+                    <a href="{{ route('assignment-users.index') }}"
+                        class="flex items-center gap-2 py-1 text-gray-700 hover:text-blue-900">
+                        <i class="bi bi-person-check"></i>
+                        Assignment Users
+                    </a>
                 </div>
             </div>
 

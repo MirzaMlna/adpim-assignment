@@ -1,0 +1,44 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('assignment_users', function (Blueprint $table) {
+            $table->id();
+
+            $table->foreignId('user_id')
+                ->constrained()
+                ->cascadeOnDelete();
+            $table->foreignId('assignment_id')
+                ->constrained()
+                ->cascadeOnDelete();
+            $table->string('departure_location');
+            $table->string('destination_location');
+            $table->string('video_report')->nullable();
+            $table->string('photo_report')->nullable();
+            $table->string('social_media_report')->nullable();
+            $table->string('news_report')->nullable();
+            $table->string('duty_proof')->nullable();
+
+            $table->boolean('is_verified')->default(false);
+
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('assignment_users');
+    }
+};

@@ -27,6 +27,9 @@ Route::middleware('auth')->group(function () {
 
     // Assignment Routes
     Route::resource('assignments', App\Http\Controllers\AssignmentController::class);
+
+    // AssignmentUser Routes
+    Route::resource('assignment-users', App\Http\Controllers\AssignmentUserController::class);
 });
 
 require __DIR__ . '/auth.php';

@@ -44,6 +44,11 @@ class User extends Authenticatable
         return $this->belongsTo(SubDivision::class);
     }
 
+    public function assignmentUsers()
+    {
+        return $this->hasMany(AssignmentUser::class);
+    }
+
     public function setPasswordAttribute($value)
     {
         if (!empty($value)) {
