@@ -14,12 +14,7 @@
 
     <div class="py-10">
         <div class="max-w-7xl mx-auto">
-
-            @if (session('success'))
-                <div class="mb-4 p-3 bg-green-100 text-green-700 rounded-lg">
-                    {{ session('success') }}
-                </div>
-            @endif
+            <x-flash-alerts />
 
             <div class="bg-white rounded-2xl shadow-sm border">
 
@@ -52,11 +47,15 @@
 
                                     <td class="px-4 py-3">
                                         <div class="flex flex-col gap-1">
-                                            @foreach ($assignment->assignmentUsers as $item)
+                                            @forelse ($assignment->assignmentUsers as $item)
                                                 <span class="bg-slate-200 px-2 py-1 rounded text-xs inline-block">
                                                     {{ $item->user->name }}
                                                 </span>
-                                            @endforeach
+                                            @empty
+                                                <span class="text-xs text-amber-600">
+                                                    Belum ditugaskan
+                                                </span>
+                                            @endforelse
                                         </div>
                                     </td>
 
@@ -105,7 +104,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center py-6 text-slate-500">
+                                    <td colspan="5" class="text-center py-6 text-slate-500">
                                         Belum ada data
                                     </td>
                                 </tr>

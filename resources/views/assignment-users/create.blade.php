@@ -5,7 +5,7 @@
                 Tambah Assignment User
             </h2>
 
-            <a href="{{ route('assignment-users.index') }}"
+            <a href="{{ route('assignments.index') }}"
                 class="px-4 py-2.5 rounded-lg bg-slate-200 text-slate-800 hover:bg-slate-300">
                 Kembali
             </a>
@@ -14,16 +14,7 @@
 
     <div class="py-10">
         <div class="max-w-4xl mx-auto">
-
-            @if ($errors->any())
-                <div class="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
-                    <ul class="list-disc list-inside text-sm">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
+            <x-flash-alerts />
 
             <div class="bg-white rounded-2xl shadow-sm border p-6">
 
@@ -48,6 +39,11 @@
                         <p class="text-xs text-slate-500 mt-1">
                             Bisa mencari nama dan memilih lebih dari satu.
                         </p>
+                        @if ($users->isEmpty())
+                            <p class="text-xs text-red-600 mt-1">
+                                Data petugas belum tersedia.
+                            </p>
+                        @endif
                     </div>
 
                     {{-- ASSIGNMENT --}}
@@ -56,21 +52,37 @@
                             Assignment
                         </label>
 
-                        <select id="assignment_select" name="assignment_id">
-                            <option value="">-- Pilih Assignment --</option>
-                            @foreach ($assignments as $assignment)
-                                <option value="{{ $assignment->id }}"
-                                    {{ old('assignment_id', request('assignment_id')) == $assignment->id ? 'selected' : '' }}>
-                                    {{ $assignment->code }} - {{ $assignment->title }}
-                                </option>
-                            @endforeach
-                        </select>
+                        @if ($lockedAssignment)
+                            <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+                                <p class="font-medium text-slate-800">{{ $lockedAssignment->code }}</p>
+                                <p class="text-slate-600">{{ $lockedAssignment->title }}</p>
+                            </div>
+                            <input type="hidden" name="assignment_id"
+                                value="{{ old('assignment_id', $lockedAssignment->id) }}">
+                        @else
+                            <select id="assignment_select" name="assignment_id">
+                                <option value="">-- Pilih Assignment --</option>
+                                @foreach ($assignments as $assignment)
+                                    <option value="{{ $assignment->id }}"
+                                        {{ old('assignment_id', request('assignment_id')) == $assignment->id ? 'selected' : '' }}>
+                                        {{ $assignment->code }} - {{ $assignment->title }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @if ($assignments->isEmpty())
+                                <p class="text-xs text-red-600 mt-1">
+                                    Tidak ada assignment tersedia untuk ditugaskan.
+                                </p>
+                            @endif
+                        @endif
                     </div>
 
                     <!-- ...fields removed as requested... -->
 
                     <div class="flex justify-end">
-                        <button class="px-6 py-2.5 bg-slate-800 text-white rounded-lg hover:bg-slate-900">
+                        <button
+                            class="px-6 py-2.5 bg-slate-800 text-white rounded-lg hover:bg-slate-900 disabled:opacity-60 disabled:cursor-not-allowed"
+                            {{ $users->isEmpty() || (!$lockedAssignment && $assignments->isEmpty()) ? 'disabled' : '' }}>
                             Simpan
                         </button>
                     </div>
@@ -96,12 +108,14 @@
         });
 
         // ASSIGNMENT (Single Select dengan Search)
-        new TomSelect("#assignment_select", {
-            placeholder: "Cari assignment...",
-            persist: false,
-            create: false,
-            allowEmptyOption: true,
-        });
+        if (document.querySelector("#assignment_select")) {
+            new TomSelect("#assignment_select", {
+                placeholder: "Cari assignment...",
+                persist: false,
+                create: false,
+                allowEmptyOption: true,
+            });
+        }
     </script>
 
 </x-app-layout>

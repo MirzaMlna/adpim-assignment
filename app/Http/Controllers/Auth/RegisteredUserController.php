@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\SubDivision;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 
@@ -35,10 +35,22 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        $subDivision = SubDivision::firstOrCreate([
+            'name' => 'Sub Bidang Dokumentasi Pimpinan',
+        ]);
+
         $user = User::create([
+            'sub_division_id' => $subDivision->id,
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            // Password di-hash oleh mutator pada model User.
+            'password' => $request->password,
+            'nip' => (string) now()->format('ymdHis') . random_int(10, 99),
+            'rank' => 'Staf',
+            'job_title' => 'Staff',
+            'role' => 'STAFF',
+            'is_active' => true,
+            'note' => 'Akun registrasi',
         ]);
 
         event(new Registered($user));

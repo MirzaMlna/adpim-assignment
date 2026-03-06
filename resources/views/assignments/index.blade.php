@@ -2,27 +2,19 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="text-2xl font-bold text-slate-800">
-                Data Tugas
+                Data Giat
             </h2>
 
-            <div class="flex gap-2">
-                <a href="{{ route('assignments.create') }}"
-                    class="px-4 py-2.5 rounded-lg bg-slate-800 text-white hover:bg-slate-900">
-                    + Tambah Tugas
-                </a>
-
-            </div>
+            <a href="{{ route('assignments.create') }}"
+                class="px-4 py-2.5 rounded-lg bg-slate-800 text-white hover:bg-slate-900">
+                + Tambah Giat
+            </a>
         </div>
     </x-slot>
 
     <div class="py-10">
         <div class="max-w-7xl mx-auto">
-
-            @if (session('success'))
-                <div class="mb-4 p-3 bg-green-100 text-green-700 rounded-lg">
-                    {{ session('success') }}
-                </div>
-            @endif
+            <x-flash-alerts />
 
             <div class="bg-white rounded-2xl shadow-sm border">
 
@@ -88,35 +80,40 @@
                                         <br>
                                         <span class="text-xs text-slate-500">
                                             {{ $item->location }}
+                                        </span>
                                     </td>
 
                                     <td class="px-4 py-3">
-                                        <div class="flex gap-2">
+                                        <div class="flex flex-col gap-2">
+
                                             <a href="{{ $item->assignmentUsers->isNotEmpty()
                                                 ? route('assignment-users.edit', $item->assignmentUsers->first()->id)
                                                 : route('assignment-users.create', ['assignment_id' => $item->id]) }}"
-                                                class="px-3 py-1 bg-sky-600 text-white rounded-md text-xs">
-                                                Tugaskan
+                                                class="w-full text-center px-3 py-2 bg-sky-600 text-white rounded-md text-xs">
+                                                {{ $item->assignmentUsers->isNotEmpty() ? 'Ubah Petugas' : 'Tugaskan' }}
                                             </a>
 
-                                            <a href="{{ route('assignments.show', $item->id) }}"
-                                                class="px-3 py-1 bg-blue-600 text-white rounded-md text-xs">
-                                                Detail
-                                            </a>
+                                            <div class="flex gap-2">
+                                                <a href="{{ route('assignments.show', $item->id) }}"
+                                                    class="px-3 py-1 bg-blue-600 text-white rounded-md text-xs">
+                                                    Detail
+                                                </a>
 
-                                            <a href="{{ route('assignments.edit', $item->id) }}"
-                                                class="px-3 py-1 bg-amber-500 text-white rounded-md text-xs">
-                                                Edit
-                                            </a>
+                                                <a href="{{ route('assignments.edit', $item->id) }}"
+                                                    class="px-3 py-1 bg-amber-500 text-white rounded-md text-xs">
+                                                    Edit
+                                                </a>
 
-                                            <form action="{{ route('assignments.destroy', $item->id) }}" method="POST"
-                                                onsubmit="return confirm('Hapus data?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button class="px-3 py-1 bg-red-600 text-white rounded-md text-xs">
-                                                    Hapus
-                                                </button>
-                                            </form>
+                                                <form action="{{ route('assignments.destroy', $item->id) }}"
+                                                    method="POST" onsubmit="return confirm('Hapus data?')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button class="px-3 py-1 bg-red-600 text-white rounded-md text-xs">
+                                                        Hapus
+                                                    </button>
+                                                </form>
+                                            </div>
+
                                         </div>
                                     </td>
                                 </tr>

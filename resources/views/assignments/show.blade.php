@@ -7,6 +7,7 @@
 
     <div class="py-10">
         <div class="max-w-4xl mx-auto">
+            <x-flash-alerts />
 
             <div class="bg-white rounded-2xl shadow-sm border p-8 space-y-6">
 
@@ -85,6 +86,21 @@
                     </div>
                 </div>
 
+                <div>
+                    <p class="text-slate-500 mb-2">Petugas Ditugaskan</p>
+                    <div class="flex flex-wrap gap-2">
+                        @forelse ($assignment->assignmentUsers as $item)
+                            <span class="bg-slate-200 px-3 py-1 rounded text-sm">
+                                {{ $item->user->name }}
+                            </span>
+                        @empty
+                            <span class="text-sm text-amber-600">
+                                Belum ada petugas yang ditugaskan.
+                            </span>
+                        @endforelse
+                    </div>
+                </div>
+
                 @if ($assignment->description)
                     <div>
                         <p class="text-slate-500 mb-2">Deskripsi</p>
@@ -95,6 +111,12 @@
                 @endif
 
                 <div class="pt-6">
+                    <a href="{{ $assignment->assignmentUsers->isNotEmpty()
+                        ? route('assignment-users.edit', $assignment->assignmentUsers->first()->id)
+                        : route('assignment-users.create', ['assignment_id' => $assignment->id]) }}"
+                        class="px-4 py-2 bg-sky-600 text-white rounded-lg mr-2">
+                        {{ $assignment->assignmentUsers->isNotEmpty() ? 'Ubah Petugas' : 'Tugaskan Petugas' }}
+                    </a>
                     <a href="{{ route('assignments.index') }}" class="px-4 py-2 bg-slate-800 text-white rounded-lg">
                         Kembali
                     </a>

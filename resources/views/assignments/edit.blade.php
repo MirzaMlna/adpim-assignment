@@ -3,7 +3,7 @@
     <x-slot name="header">
         <div>
             <h2 class="text-2xl font-bold text-slate-800">
-                Edit Tugas
+                Edit Giat
             </h2>
             <p class="text-sm text-slate-500">
                 Perbarui data kegiatan / penugasan
@@ -13,6 +13,7 @@
 
     <div class="py-10">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+            <x-flash-alerts />
 
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
 

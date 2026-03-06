@@ -3,7 +3,7 @@
     <x-slot name="header">
         <div>
             <h2 class="text-2xl font-bold text-slate-800">
-                Tambah Tugas
+                Tambah Giat
             </h2>
             <p class="text-sm text-slate-500">
                 Tambahkan data kegiatan / penugasan baru
@@ -13,6 +13,7 @@
 
     <div class="py-10">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+            <x-flash-alerts />
 
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
 
@@ -26,9 +27,15 @@
                             </label>
                             <select id="region_classification" name="region_classification" required
                                 class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
-                                <option value="dalam_daerah">Dalam Daerah</option>
-                                <option value="dalam_daerah_kabupaten">Dalam Daerah Kabupaten</option>
-                                <option value="luar_daerah">Luar Daerah</option>
+                                <option value="dalam_daerah"
+                                    {{ old('region_classification', 'dalam_daerah') == 'dalam_daerah' ? 'selected' : '' }}>
+                                    Dalam Daerah</option>
+                                <option value="dalam_daerah_kabupaten"
+                                    {{ old('region_classification') == 'dalam_daerah_kabupaten' ? 'selected' : '' }}>
+                                    Dalam Daerah Kabupaten</option>
+                                <option value="luar_daerah"
+                                    {{ old('region_classification') == 'luar_daerah' ? 'selected' : '' }}>
+                                    Luar Daerah</option>
                             </select>
                         </div>
 
@@ -36,10 +43,15 @@
                             <label class="block text-sm font-medium text-slate-700 mb-2">Wilayah Dalam Daerah</label>
                             <select name="location"
                                 class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
-                                <option value="Banjarmasin">Kota Banjarmasin</option>
-                                <option value="Banjarbaru">Kota Banjarbaru</option>
-                                <option value="Banjar">Kabupaten Banjar</option>
-                                <option value="Barito Kuala">Kabupaten Barito Kuala</option>
+                                <option value="Banjarmasin"
+                                    {{ old('location') == 'Banjarmasin' ? 'selected' : '' }}>Kota Banjarmasin</option>
+                                <option value="Banjarbaru"
+                                    {{ old('location') == 'Banjarbaru' ? 'selected' : '' }}>Kota Banjarbaru</option>
+                                <option value="Banjar" {{ old('location') == 'Banjar' ? 'selected' : '' }}>Kabupaten
+                                    Banjar</option>
+                                <option value="Barito Kuala"
+                                    {{ old('location') == 'Barito Kuala' ? 'selected' : '' }}>Kabupaten Barito Kuala
+                                </option>
                             </select>
                         </div>
 
@@ -48,15 +60,27 @@
                                 Kabupaten</label>
                             <select name="location"
                                 class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
-                                <option value="Hulu Sungai Selatan">Kabupaten Hulu Sungai Selatan</option>
-                                <option value="Hulu Sungai Tengah">Kabupaten Hulu Sungai Tengah</option>
-                                <option value="Hulu Sungai Utara">Kabupaten Hulu Sungai Utara</option>
-                                <option value="Balangan">Kabupaten Balangan</option>
-                                <option value="Kotabaru">Kabupaten Kotabaru</option>
-                                <option value="Tabalong">Kabupaten Tabalong</option>
-                                <option value="Tanah Laut">Kabupaten Tanah Laut</option>
-                                <option value="Tanah Bumbu">Kabupaten Tanah Bumbu</option>
-                                <option value="Tapin">Kabupaten Tapin</option>
+                                <option value="Hulu Sungai Selatan"
+                                    {{ old('location') == 'Hulu Sungai Selatan' ? 'selected' : '' }}>Kabupaten Hulu
+                                    Sungai Selatan</option>
+                                <option value="Hulu Sungai Tengah"
+                                    {{ old('location') == 'Hulu Sungai Tengah' ? 'selected' : '' }}>Kabupaten Hulu
+                                    Sungai Tengah</option>
+                                <option value="Hulu Sungai Utara"
+                                    {{ old('location') == 'Hulu Sungai Utara' ? 'selected' : '' }}>Kabupaten Hulu
+                                    Sungai Utara</option>
+                                <option value="Balangan" {{ old('location') == 'Balangan' ? 'selected' : '' }}>
+                                    Kabupaten Balangan</option>
+                                <option value="Kotabaru" {{ old('location') == 'Kotabaru' ? 'selected' : '' }}>
+                                    Kabupaten Kotabaru</option>
+                                <option value="Tabalong" {{ old('location') == 'Tabalong' ? 'selected' : '' }}>
+                                    Kabupaten Tabalong</option>
+                                <option value="Tanah Laut" {{ old('location') == 'Tanah Laut' ? 'selected' : '' }}>
+                                    Kabupaten Tanah Laut</option>
+                                <option value="Tanah Bumbu" {{ old('location') == 'Tanah Bumbu' ? 'selected' : '' }}>
+                                    Kabupaten Tanah Bumbu</option>
+                                <option value="Tapin" {{ old('location') == 'Tapin' ? 'selected' : '' }}>Kabupaten
+                                    Tapin</option>
                             </select>
                         </div>
 

@@ -5,7 +5,7 @@
                 Edit Assignment User
             </h2>
 
-            <a href="{{ route('assignment-users.index') }}"
+            <a href="{{ route('assignments.index') }}"
                 class="px-4 py-2.5 rounded-lg bg-slate-200 text-slate-800 hover:bg-slate-300">
                 Kembali
             </a>
@@ -14,16 +14,7 @@
 
     <div class="py-10">
         <div class="max-w-4xl mx-auto">
-
-            @if ($errors->any())
-                <div class="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
-                    <ul class="list-disc list-inside text-sm">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
+            <x-flash-alerts />
 
             <div class="bg-white rounded-2xl shadow-sm border p-6">
 
@@ -39,7 +30,7 @@
                         <select id="user_ids" name="user_id[]" multiple>
                             @foreach ($users as $user)
                                 <option value="{{ $user->id }}"
-                                    {{ $assignment_user->user_id == $user->id ? 'selected' : '' }}>
+                                    {{ in_array($user->id, old('user_id', $assignedUserIds ?? [])) ? 'selected' : '' }}>
                                     {{ $user->name }}
                                 </option>
                             @endforeach
@@ -54,19 +45,17 @@
                         <label class="block text-sm font-medium text-slate-700 mb-2">
                             Assignment
                         </label>
-                        <select id="assignment_select" name="assignment_id">
-                            <option value="">-- Pilih Assignment --</option>
-                            @foreach ($assignments as $assignment)
-                                <option value="{{ $assignment->id }}"
-                                    {{ $assignment_user->assignment_id == $assignment->id ? 'selected' : '' }}>
-                                    {{ $assignment->code }} - {{ $assignment->title }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+                            <p class="font-medium text-slate-800">{{ $lockedAssignment?->code }}</p>
+                            <p class="text-slate-600">{{ $lockedAssignment?->title }}</p>
+                        </div>
+                        <input type="hidden" name="assignment_id" value="{{ $assignment_user->assignment_id }}">
                     </div>
 
                     <div class="flex justify-end">
-                        <button class="px-6 py-2.5 bg-slate-800 text-white rounded-lg hover:bg-slate-900">
+                        <button
+                            class="px-6 py-2.5 bg-slate-800 text-white rounded-lg hover:bg-slate-900 disabled:opacity-60 disabled:cursor-not-allowed"
+                            {{ $users->isEmpty() ? 'disabled' : '' }}>
                             Update
                         </button>
                     </div>
