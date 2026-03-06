@@ -30,13 +30,13 @@
                 <form method="POST" action="{{ route('assignment-users.store') }}">
                     @csrf
 
-                    <div class="mb-4">
+                    {{-- PETUGAS --}}
+                    <div class="mb-6">
                         <label class="block text-sm font-medium text-slate-700 mb-2">
-                            User (maksimal 5 orang)
+                            Petugas
                         </label>
 
-                        <select id="user_ids" name="user_id[]" multiple
-                            class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
+                        <select id="user_ids" name="user_id[]" multiple>
                             @foreach ($users as $user)
                                 <option value="{{ $user->id }}"
                                     {{ collect(old('user_id'))->contains($user->id) ? 'selected' : '' }}>
@@ -50,46 +50,24 @@
                         </p>
                     </div>
 
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                    {{-- ASSIGNMENT --}}
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-slate-700 mb-2">
                             Assignment
                         </label>
-                        <select name="assignment_id"
-                            class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
+
+                        <select id="assignment_select" name="assignment_id">
                             <option value="">-- Pilih Assignment --</option>
                             @foreach ($assignments as $assignment)
                                 <option value="{{ $assignment->id }}"
-                                    {{ old('assignment_id') == $assignment->id ? 'selected' : '' }}>
+                                    {{ old('assignment_id', request('assignment_id')) == $assignment->id ? 'selected' : '' }}>
                                     {{ $assignment->code }} - {{ $assignment->title }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
 
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">
-                            Lokasi Berangkat
-                        </label>
-                        <input type="text" name="departure_location" value="{{ old('departure_location') }}"
-                            class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
-                    </div>
-
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">
-                            Lokasi Tujuan
-                        </label>
-                        <input type="text" name="destination_location" value="{{ old('destination_location') }}"
-                            class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
-                    </div>
-
-                    <div class="mb-6 flex items-center gap-2">
-                        <input type="checkbox" name="is_verified" value="1"
-                            class="rounded border-slate-300 text-slate-800 focus:ring-slate-800"
-                            {{ old('is_verified') ? 'checked' : '' }}>
-                        <label class="text-sm text-slate-700">
-                            Verified
-                        </label>
-                    </div>
+                    <!-- ...fields removed as requested... -->
 
                     <div class="flex justify-end">
                         <button class="px-6 py-2.5 bg-slate-800 text-white rounded-lg hover:bg-slate-900">
@@ -103,16 +81,27 @@
         </div>
     </div>
 
+    {{-- TOM SELECT --}}
     <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
 
     <script>
+        // PETUGAS (Multiple Select)
         new TomSelect("#user_ids", {
             plugins: ['remove_button'],
-            placeholder: "Pilih user...",
+            placeholder: "Pilih petugas...",
             maxItems: 5,
             persist: false,
             create: false,
         });
+
+        // ASSIGNMENT (Single Select dengan Search)
+        new TomSelect("#assignment_select", {
+            placeholder: "Cari assignment...",
+            persist: false,
+            create: false,
+            allowEmptyOption: true,
+        });
     </script>
+
 </x-app-layout>

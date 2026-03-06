@@ -13,7 +13,7 @@ class UserSeeder extends Seeder
         $subs = SubDivision::all();
         if ($subs->count() == 0) {
             $subs = collect([
-                SubDivision::create(['name' => 'Sub Bagian Umum']),
+                SubDivision::create(['name' => 'Sub Bidang Dokumentasi Pimpinan']),
             ]);
         }
         $roles = ['ADMIN', 'STAFF', 'PIMPINAN ADPIM'];
@@ -23,7 +23,7 @@ class UserSeeder extends Seeder
                 'email' => 'user' . $i . '@adpim.com',
                 'password' => 'password',
                 'nip' => '12345678' . $i,
-                'name' => 'User ' . $i,
+                'name' => fake()->name(),
                 'rank' => 'Rank ' . $i,
                 'job_title' => 'Job Title ' . $i,
                 'role' => $roles[array_rand($roles)],

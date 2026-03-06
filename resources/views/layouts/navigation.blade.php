@@ -62,7 +62,7 @@
             ? 'border-blue-900 text-blue-900'
             : 'border-transparent text-gray-600 hover:text-blue-900 hover:border-blue-900' }}">
                             <i class="bi bi-clipboard-check"></i>
-                            Penugasan
+                            Giat
                             <i class="bi bi-chevron-down text-xs"></i>
                         </button>
 
@@ -72,12 +72,12 @@
                             <a href="{{ route('assignments.index') }}"
                                 class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900">
                                 <i class="bi bi-list-task"></i>
-                                Daftar Tugas
+                                Daftar Giat
                             </a>
                             <a href="{{ route('assignment-users.index') }}"
                                 class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900">
                                 <i class="bi bi-person-check"></i>
-                                Assignment Users
+                                Penugasan Giat
                             </a>
 
                         </div>
@@ -179,7 +179,7 @@
                     class="flex items-center justify-between w-full py-2 text-gray-700 hover:text-blue-900">
                     <span class="flex items-center gap-2">
                         <i class="bi bi-clipboard-check"></i>
-                        Penugasan
+                        Giat
                     </span>
                     <i class="bi" :class="tugasOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
                 </button>
@@ -189,12 +189,12 @@
                     <a href="{{ route('assignments.index') }}"
                         class="flex items-center gap-2 py-1 text-gray-700 hover:text-blue-900">
                         <i class="bi bi-list-task"></i>
-                        Daftar Tugas
+                        Daftar Giat
                     </a>
                     <a href="{{ route('assignment-users.index') }}"
                         class="flex items-center gap-2 py-1 text-gray-700 hover:text-blue-900">
                         <i class="bi bi-person-check"></i>
-                        Assignment Users
+                        Penugasan Giat
                     </a>
                 </div>
             </div>

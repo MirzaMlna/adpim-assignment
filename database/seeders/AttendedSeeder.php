@@ -9,12 +9,26 @@ class AttendedSeeder extends Seeder
 {
     public function run(): void
     {
-        foreach (range(1, 10) as $i) {
-            Attended::create([
-                'name' => 'Attended ' . $i,
-                'rank' => 'Rank ' . $i,
-                'rank_abbreviation' => 'R' . $i,
-            ]);
+        $data = [
+            [
+                'name' => 'H. Muhidin',
+                'rank' => 'Gubernur',
+                'rank_abbreviation' => 'GUB'
+            ],
+            [
+                'name' => 'H. Hasnuryadi Sulaiman',
+                'rank' => 'Wakil Gubernur',
+                'rank_abbreviation' => 'WAGUB'
+            ],
+            [
+                'name' => 'M. Syarifuddin, M.Pd',
+                'rank' => 'Sekretaris Daerah',
+                'rank_abbreviation' => 'SEKDA'
+            ],
+        ];
+
+        foreach ($data as $item) {
+            Attended::create($item);
         }
     }
 }

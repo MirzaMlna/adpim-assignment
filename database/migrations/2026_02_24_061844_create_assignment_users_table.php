@@ -20,15 +20,7 @@ return new class extends Migration
             $table->foreignId('assignment_id')
                 ->constrained()
                 ->cascadeOnDelete();
-            $table->string('departure_location');
-            $table->string('destination_location');
-            $table->string('video_report')->nullable();
-            $table->string('photo_report')->nullable();
-            $table->string('social_media_report')->nullable();
-            $table->string('news_report')->nullable();
-            $table->string('duty_proof')->nullable();
-
-            $table->boolean('is_verified')->default(false);
+            // ...columns removed as requested...
 
             $table->timestamps();
         });

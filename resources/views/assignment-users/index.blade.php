@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="text-2xl font-bold text-slate-800">
-                Assignment Users
+                Data Assignment User
             </h2>
 
             <a href="{{ route('assignment-users.create') }}"
@@ -27,80 +27,86 @@
                     <table class="min-w-full text-sm">
                         <thead class="bg-slate-800 text-white">
                             <tr>
-                                <th class="px-4 py-3 text-left">User</th>
-                                <th class="px-4 py-3 text-left">Assignment</th>
-                                <th class="px-4 py-3 text-left">Lokasi</th>
-                                <th class="px-4 py-3 text-left">Status</th>
-                                <th class="px-4 py-3 text-left w-40">Aksi</th>
+                                <th class="px-4 py-3 text-left">Kode Tugas</th>
+                                <th class="px-4 py-3 text-left">Judul</th>
+                                <th class="px-4 py-3 text-left">Petugas</th>
+                                <th class="px-4 py-3 text-center">Pimpinan</th>
+                                <th class="px-4 py-3 text-center w-40">Action</th>
                             </tr>
                         </thead>
 
                         <tbody class="divide-y">
-                            @forelse($data as $row)
-                                <tr class="hover:bg-slate-50 align-middle">
+                            @forelse ($assignments as $assignment)
+                                <tr class="hover:bg-slate-50">
+                                    @php
+                                        $assignmentUser = $assignment->assignmentUsers->first();
+                                    @endphp
 
-                                    <td class="px-4 py-3">
-                                        <div class="font-medium text-slate-800">
-                                            {{ $row->user->name }}
-                                        </div>
-                                        <div class="text-xs text-slate-500">
-                                            {{ $row->user->email }}
-                                        </div>
-                                    </td>
-
-                                    <td class="px-4 py-3 text-slate-700">
-                                        {{ $row->assignment->title ?? '-' }}
-                                    </td>
-
-                                    <td class="px-4 py-3 text-slate-600">
-                                        <div class="text-xs text-slate-500">Berangkat</div>
-                                        <div class="font-medium">
-                                            {{ $row->departure_location }}
-                                        </div>
-
-                                        <div class="text-xs text-slate-500 mt-1">Tujuan</div>
-                                        <div class="font-medium">
-                                            {{ $row->destination_location }}
-                                        </div>
+                                    <td class="px-4 py-3 font-semibold">
+                                        {{ $assignment->code }}
                                     </td>
 
                                     <td class="px-4 py-3">
-                                        @if ($row->is_verified)
-                                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
-                                                Verified
-                                            </span>
-                                        @else
-                                            <span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">
-                                                Belum Verified
-                                            </span>
-                                        @endif
+                                        {{ $assignment->title }}
                                     </td>
 
                                     <td class="px-4 py-3">
-                                        <div class="flex gap-2">
+                                        <div class="flex flex-col gap-1">
+                                            @foreach ($assignment->assignmentUsers as $item)
+                                                <span class="bg-slate-200 px-2 py-1 rounded text-xs inline-block">
+                                                    {{ $item->user->name }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    </td>
 
-                                            <a href="{{ route('assignment-users.edit', $row->id) }}"
-                                                class="px-3 py-1 bg-amber-500 text-white rounded-md text-xs">
-                                                Edit
+                                    <td class="px-4 py-3 text-center">
+                                        <div class="flex flex-col gap-1">
+                                            @foreach ($assignment->attendeds as $att)
+                                                <span class="inline-block bg-slate-200 px-2 py-1 rounded text-xs">
+                                                    {{ $att->rank_abbreviation }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    </td>
+
+                                    <td class="px-4 py-3">
+                                        <div class="flex justify-center gap-2">
+                                            <a href="{{ route('assignments.show', $assignment->id) }}"
+                                                class="px-3 py-1 bg-blue-600 text-white rounded-md text-xs">
+                                                Detail
                                             </a>
 
-                                            <form action="{{ route('assignment-users.destroy', $row->id) }}"
-                                                method="POST" onsubmit="return confirm('Hapus data?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button class="px-3 py-1 bg-red-600 text-white rounded-md text-xs">
-                                                    Hapus
-                                                </button>
-                                            </form>
+                                            @if ($assignmentUser)
+                                                <a href="{{ route('assignment-users.edit', $assignmentUser->id) }}"
+                                                    class="px-3 py-1 bg-amber-500 text-white rounded-md text-xs">
+                                                    Edit
+                                                </a>
+                                            @else
+                                                <a href="{{ route('assignment-users.create', ['assignment_id' => $assignment->id]) }}"
+                                                    class="px-3 py-1 bg-sky-600 text-white rounded-md text-xs">
+                                                    Tugaskan
+                                                </a>
+                                            @endif
 
+                                            @if ($assignmentUser)
+                                                <form action="{{ route('assignment-users.destroy', $assignmentUser->id) }}"
+                                                    method="POST" onsubmit="return confirm('Hapus data?')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button class="px-3 py-1 bg-red-600 text-white rounded-md text-xs">
+                                                        Hapus
+                                                    </button>
+                                                </form>
+                                            @endif
                                         </div>
                                     </td>
 
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="text-center py-6 text-slate-500">
-                                        Belum ada data assignment user
+                                    <td colspan="6" class="text-center py-6 text-slate-500">
+                                        Belum ada data
                                     </td>
                                 </tr>
                             @endforelse
@@ -109,7 +115,7 @@
                 </div>
 
                 <div class="p-4">
-                    {{ $data->links() }}
+                    {{ $assignments->links() }}
                 </div>
 
             </div>

@@ -5,10 +5,13 @@
                 Data Tugas
             </h2>
 
-            <a href="{{ route('assignments.create') }}"
-                class="px-4 py-2.5 rounded-lg bg-slate-800 text-white hover:bg-slate-900">
-                + Tambah Tugas
-            </a>
+            <div class="flex gap-2">
+                <a href="{{ route('assignments.create') }}"
+                    class="px-4 py-2.5 rounded-lg bg-slate-800 text-white hover:bg-slate-900">
+                    + Tambah Tugas
+                </a>
+
+            </div>
         </div>
     </x-slot>
 
@@ -31,8 +34,7 @@
                                 <th class="px-4 py-3 text-left">Judul</th>
                                 <th class="px-4 py-3 text-left">Pimpinan</th>
                                 <th class="px-4 py-3 text-left">Tanggal</th>
-                                <th class="px-4 py-3 text-left">Klasifikasi Wilayah</th>
-                                <th class="px-4 py-3 text-left">Per hari</th>
+                                <th class="px-4 py-3 text-center">Klasifikasi Wilayah</th>
                                 <th class="px-4 py-3 text-left w-40">Aksi</th>
                             </tr>
                         </thead>
@@ -88,12 +90,15 @@
                                             {{ $item->location }}
                                     </td>
 
-                                    <td class="px-4 py-3 font-semibold text-slate-700">
-                                        Rp{{ number_format($item->fee_per_day, 0, ',', '.') }}
-                                    </td>
-
                                     <td class="px-4 py-3">
                                         <div class="flex gap-2">
+                                            <a href="{{ $item->assignmentUsers->isNotEmpty()
+                                                ? route('assignment-users.edit', $item->assignmentUsers->first()->id)
+                                                : route('assignment-users.create', ['assignment_id' => $item->id]) }}"
+                                                class="px-3 py-1 bg-sky-600 text-white rounded-md text-xs">
+                                                Tugaskan
+                                            </a>
+
                                             <a href="{{ route('assignments.show', $item->id) }}"
                                                 class="px-3 py-1 bg-blue-600 text-white rounded-md text-xs">
                                                 Detail
@@ -114,7 +119,6 @@
                                             </form>
                                         </div>
                                     </td>
-
                                 </tr>
                             @empty
                                 <tr>

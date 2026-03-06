@@ -72,13 +72,6 @@
                         </p>
                     </div>
 
-                    <div>
-                        <p class="text-slate-500">Total Biaya</p>
-                        <p class="font-semibold text-slate-800">
-                            Rp {{ number_format($assignment->total_fee, 0, ',', '.') }}
-                        </p>
-                    </div>
-
                 </div>
 
                 <div>

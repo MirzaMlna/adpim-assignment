@@ -175,20 +175,38 @@
                     const dalamDaerah = document.getElementById('wilayah_dalam_daerah');
                     const dalamDaerahKab = document.getElementById('wilayah_dalam_daerah_kabupaten');
                     const luarDaerah = document.getElementById('wilayah_luar_daerah');
-                    regionSelect.addEventListener('change', function() {
+
+                    const dalamSelect = dalamDaerah.querySelector('select');
+                    const kabSelect = dalamDaerahKab.querySelector('select');
+                    const luarInput = luarDaerah.querySelector('input');
+
+                    function resetAll() {
                         dalamDaerah.style.display = 'none';
                         dalamDaerahKab.style.display = 'none';
                         luarDaerah.style.display = 'none';
+
+                        dalamSelect.disabled = true;
+                        kabSelect.disabled = true;
+                        luarInput.disabled = true;
+                    }
+
+                    regionSelect.addEventListener('change', function() {
+                        resetAll();
+
                         if (this.value === 'dalam_daerah') {
                             dalamDaerah.style.display = 'block';
+                            dalamSelect.disabled = false;
                         } else if (this.value === 'dalam_daerah_kabupaten') {
                             dalamDaerahKab.style.display = 'block';
+                            kabSelect.disabled = false;
                         } else if (this.value === 'luar_daerah') {
                             luarDaerah.style.display = 'block';
+                            luarInput.disabled = false;
                         }
                     });
-                    // Set initial state
+
                     regionSelect.dispatchEvent(new Event('change'));
+
                     new TomSelect("#attended_ids", {
                         plugins: ['remove_button'],
                         placeholder: "Pilih pimpinan...",

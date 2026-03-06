@@ -11,14 +11,18 @@ class AssignmentUserController extends Controller
 {
     public function index()
     {
-        $data = AssignmentUser::with(['user', 'assignment'])->latest()->paginate(10);
-        return view('assignment-users.index', compact('data'));
+        $assignments = Assignment::with(['assignmentUsers.user'])
+            ->latest()
+            ->paginate(10);
+
+        return view('assignment-users.index', compact('assignments'));
     }
 
     public function create()
     {
         $users = User::all();
-        $assignments = Assignment::all();
+        $assignments = Assignment::whereDoesntHave('assignmentUsers')->get();
+
         return view('assignment-users.create', compact('users', 'assignments'));
     }
 
@@ -27,18 +31,13 @@ class AssignmentUserController extends Controller
         $request->validate([
             'user_id' => 'required|array|min:1|max:5',
             'user_id.*' => 'exists:users,id',
-            'assignment_id' => 'required',
-            'departure_location' => 'required',
-            'destination_location' => 'required',
+            'assignment_id' => 'required|exists:assignments,id',
         ]);
 
         foreach ($request->user_id as $userId) {
             AssignmentUser::create([
                 'user_id' => $userId,
                 'assignment_id' => $request->assignment_id,
-                'departure_location' => $request->departure_location,
-                'destination_location' => $request->destination_location,
-                'is_verified' => $request->has('is_verified'),
             ]);
         }
 
@@ -50,25 +49,34 @@ class AssignmentUserController extends Controller
     {
         $users = User::all();
         $assignments = Assignment::all();
+
         return view('assignment-users.edit', compact('assignment_user', 'users', 'assignments'));
     }
 
     public function update(Request $request, AssignmentUser $assignment_user)
     {
         $request->validate([
-            'departure_location' => 'required',
-            'destination_location' => 'required',
+            'user_id' => 'required|array|min:1|max:5',
+            'user_id.*' => 'exists:users,id',
+            'assignment_id' => 'required|exists:assignments,id',
         ]);
 
-        $assignment_user->update($request->all());
+        AssignmentUser::where('assignment_id', $assignment_user->assignment_id)->delete();
+
+        foreach ($request->user_id as $userId) {
+            AssignmentUser::create([
+                'user_id' => $userId,
+                'assignment_id' => $request->assignment_id,
+            ]);
+        }
 
         return redirect()->route('assignment-users.index')
             ->with('success', 'Data berhasil diperbarui');
     }
-
     public function destroy(AssignmentUser $assignment_user)
     {
         $assignment_user->delete();
+
         return back()->with('success', 'Data berhasil dihapus');
     }
 }

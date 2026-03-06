@@ -12,18 +12,6 @@ class AssignmentUser extends Model
     protected $fillable = [
         'user_id',
         'assignment_id',
-        'departure_location',
-        'destination_location',
-        'video_report',
-        'photo_report',
-        'social_media_report',
-        'news_report',
-        'duty_proof',
-        'is_verified',
-    ];
-
-    protected $casts = [
-        'is_verified' => 'boolean',
     ];
 
     public function user()
