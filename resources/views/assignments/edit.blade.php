@@ -138,8 +138,29 @@
                             <label class="block text-sm font-medium text-slate-700 mb-2">
                                 Tanggal
                             </label>
-                            <input type="date" name="date" value="{{ old('date', $assignment->date) }}"
+                            <input type="date" name="date"
+                                value="{{ old('date', optional($assignment->date)->format('Y-m-d')) }}"
                                 class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">
+                                Tanggal Berangkat Petugas
+                            </label>
+                            <input type="date" name="boarding_date"
+                                value="{{ old('boarding_date', optional($assignment->boarding_date)->format('Y-m-d')) }}"
+                                class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800"
+                                required>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">
+                                Tanggal Pulang Petugas
+                            </label>
+                            <input type="date" name="return_date"
+                                value="{{ old('return_date', optional($assignment->return_date)->format('Y-m-d')) }}"
+                                class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800"
+                                required>
                         </div>
 
                         <div>
@@ -148,6 +169,16 @@
                             </label>
                             <input type="time" name="time" value="{{ old('time', $assignment->time) }}"
                                 class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">
+                                Transportasi
+                            </label>
+                            <input type="text" name="transportation"
+                                value="{{ old('transportation', $assignment->transportation) }}"
+                                class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800"
+                                required>
                         </div>
 
                         <div>

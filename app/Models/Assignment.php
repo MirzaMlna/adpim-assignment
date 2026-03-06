@@ -11,6 +11,9 @@ class Assignment extends Model
         'title',
         'agency',
         'date',
+        'boarding_date',
+        'return_date',
+        'transportation',
         'time',
         'day_count',
         'location',
@@ -18,6 +21,12 @@ class Assignment extends Model
         'fee_per_day',
         'description',
         'region_classification'
+    ];
+
+    protected $casts = [
+        'date' => 'date',
+        'boarding_date' => 'date',
+        'return_date' => 'date',
     ];
 
     public function attendeds()

@@ -36,6 +36,20 @@
                     </div>
 
                     <div>
+                        <p class="text-slate-500">Tanggal Berangkat Petugas</p>
+                        <p class="font-medium">
+                            {{ $assignment->boarding_date ? \Carbon\Carbon::parse($assignment->boarding_date)->format('d M Y') : '-' }}
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="text-slate-500">Tanggal Pulang Petugas</p>
+                        <p class="font-medium">
+                            {{ $assignment->return_date ? \Carbon\Carbon::parse($assignment->return_date)->format('d M Y') : '-' }}
+                        </p>
+                    </div>
+
+                    <div>
                         <p class="text-slate-500">Klasifikasi Wilayah</p>
                         <p class="font-medium">
                             @if ($assignment->region_classification == 'dalam_daerah')
@@ -63,6 +77,13 @@
                         <p class="text-slate-500">Durasi</p>
                         <p class="font-medium">
                             {{ $assignment->day_count }} Hari
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="text-slate-500">Transportasi</p>
+                        <p class="font-medium">
+                            {{ $assignment->transportation ?? '-' }}
                         </p>
                     </div>
 
@@ -117,6 +138,12 @@
                         class="px-4 py-2 bg-sky-600 text-white rounded-lg mr-2">
                         {{ $assignment->assignmentUsers->isNotEmpty() ? 'Ubah Petugas' : 'Tugaskan Petugas' }}
                     </a>
+                    @if ($assignment->assignmentUsers->isNotEmpty())
+                        <a href="{{ route('assignments.print-sppd', $assignment->id) }}"
+                            class="px-4 py-2 bg-emerald-600 text-white rounded-lg mr-2">
+                            Cetak SPPD
+                        </a>
+                    @endif
                     <a href="{{ route('assignments.index') }}" class="px-4 py-2 bg-slate-800 text-white rounded-lg">
                         Kembali
                     </a>

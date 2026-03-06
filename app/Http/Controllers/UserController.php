@@ -30,6 +30,7 @@ class UserController extends Controller
             'name' => 'required',
             'rank' => 'required',
             'job_title' => 'required',
+            'assignment_regulation_level' => 'nullable|string|max:255',
             'role' => 'required',
         ]);
 
@@ -41,6 +42,7 @@ class UserController extends Controller
             'name' => $request->name,
             'rank' => $request->rank,
             'job_title' => $request->job_title,
+            'assignment_regulation_level' => $request->assignment_regulation_level,
             'role' => $request->role,
             'is_active' => $request->has('is_active'),
             'note' => $request->note,
@@ -67,6 +69,7 @@ class UserController extends Controller
             'name' => 'required',
             'rank' => 'required',
             'job_title' => 'required',
+            'assignment_regulation_level' => 'nullable|string|max:255',
             'role' => 'required',
         ]);
 

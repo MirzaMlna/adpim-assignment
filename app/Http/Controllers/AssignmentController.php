@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Assignment;
 use App\Models\Attended;
+use App\Services\SppdDocxExporter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -39,6 +40,9 @@ class AssignmentController extends Controller
                     'title' => $validated['title'],
                     'agency' => $validated['agency'],
                     'date' => $validated['date'],
+                    'boarding_date' => $validated['boarding_date'],
+                    'return_date' => $validated['return_date'],
+                    'transportation' => $validated['transportation'],
                     'time' => $validated['time'],
                     'day_count' => $validated['day_count'],
                     'location' => $validated['location'],
@@ -86,7 +90,10 @@ class AssignmentController extends Controller
 
         $isUnchanged = $assignment->title === $validated['title']
             && $assignment->agency === $validated['agency']
-            && $assignment->date === $validated['date']
+            && (string) optional($assignment->date)->format('Y-m-d') === (string) $validated['date']
+            && (string) optional($assignment->boarding_date)->format('Y-m-d') === (string) $validated['boarding_date']
+            && (string) optional($assignment->return_date)->format('Y-m-d') === (string) $validated['return_date']
+            && $assignment->transportation === $validated['transportation']
             && $assignment->time === $validated['time']
             && (int) $assignment->day_count === (int) $validated['day_count']
             && $assignment->location === $validated['location']
@@ -106,6 +113,9 @@ class AssignmentController extends Controller
                     'title' => $validated['title'],
                     'agency' => $validated['agency'],
                     'date' => $validated['date'],
+                    'boarding_date' => $validated['boarding_date'],
+                    'return_date' => $validated['return_date'],
+                    'transportation' => $validated['transportation'],
                     'time' => $validated['time'],
                     'day_count' => $validated['day_count'],
                     'location' => $validated['location'],
@@ -133,6 +143,27 @@ class AssignmentController extends Controller
         $assignment->load(['attendeds', 'assignmentUsers.user']);
 
         return view('assignments.show', compact('assignment'));
+    }
+
+    public function printSppd(Assignment $assignment, SppdDocxExporter $exporter)
+    {
+        $assignment->load('assignmentUsers.user');
+
+        if ($assignment->assignmentUsers->isEmpty()) {
+            return back()->with('warning', 'Petugas belum ditugaskan. Tugaskan petugas terlebih dahulu sebelum cetak SPPD.');
+        }
+
+        try {
+            $outputPath = $exporter->export($assignment);
+        } catch (Throwable $e) {
+            report($e);
+
+            return back()->with('error', 'Gagal membuat file SPPD. Periksa template LEMBAR_SPPD.docx lalu coba lagi.');
+        }
+
+        $downloadName = 'SPPD-' . $assignment->code . '.docx';
+
+        return response()->download($outputPath, $downloadName)->deleteFileAfterSend(true);
     }
 
     public function destroy(Assignment $assignment)
@@ -178,6 +209,9 @@ class AssignmentController extends Controller
             'title' => 'required|string|max:255',
             'agency' => 'required|string|max:255',
             'date' => 'required|date',
+            'boarding_date' => 'required|date',
+            'return_date' => 'required|date|after_or_equal:boarding_date',
+            'transportation' => 'required|string|max:255',
             'time' => 'required|date_format:H:i',
             'day_count' => 'required|integer|min:1',
             'location' => 'required|string|max:255',
@@ -197,6 +231,10 @@ class AssignmentController extends Controller
             'title.required' => 'Judul kegiatan wajib diisi.',
             'agency.required' => 'Penyelenggara wajib diisi.',
             'date.required' => 'Tanggal wajib diisi.',
+            'boarding_date.required' => 'Tanggal berangkat petugas wajib diisi.',
+            'return_date.required' => 'Tanggal pulang petugas wajib diisi.',
+            'return_date.after_or_equal' => 'Tanggal pulang tidak boleh lebih awal dari tanggal berangkat.',
+            'transportation.required' => 'Transportasi wajib diisi.',
             'time.required' => 'Jam wajib diisi.',
             'time.date_format' => 'Format jam tidak valid.',
             'day_count.required' => 'Lama hari wajib diisi.',

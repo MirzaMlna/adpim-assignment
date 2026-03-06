@@ -81,6 +81,11 @@
                                                     class="px-3 py-1 bg-amber-500 text-white rounded-md text-xs">
                                                     Edit
                                                 </a>
+
+                                                <a href="{{ route('assignments.print-sppd', $assignment->id) }}"
+                                                    class="px-3 py-1 bg-emerald-600 text-white rounded-md text-xs">
+                                                    Cetak SPPD
+                                                </a>
                                             @else
                                                 <a href="{{ route('assignment-users.create', ['assignment_id' => $assignment->id]) }}"
                                                     class="px-3 py-1 bg-sky-600 text-white rounded-md text-xs">

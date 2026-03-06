@@ -33,6 +33,7 @@
                                 <th class="px-6 py-4 text-left text-sm font-semibold">Nama</th>
                                 <th class="px-6 py-4 text-left text-sm font-semibold">Email</th>
                                 <th class="px-6 py-4 text-left text-sm font-semibold">Role</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold">Tingkat Peraturan</th>
                                 <th class="px-6 py-4 text-left text-sm font-semibold">Status</th>
                                 <th class="px-6 py-4 text-left text-sm font-semibold">Aksi</th>
                             </tr>
@@ -54,6 +55,10 @@
 
                                     <td class="px-6 py-4 text-sm text-slate-600 capitalize">
                                         {{ $user->role }}
+                                    </td>
+
+                                    <td class="px-6 py-4 text-sm text-slate-600">
+                                        {{ $user->assignment_regulation_level ?? '-' }}
                                     </td>
 
                                     <td class="px-6 py-4 text-sm">
@@ -91,7 +96,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-6 py-8 text-center text-slate-500">
+                                    <td colspan="7" class="px-6 py-8 text-center text-slate-500">
                                         Belum ada data user.
                                     </td>
                                 </tr>

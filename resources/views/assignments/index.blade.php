@@ -26,6 +26,8 @@
                                 <th class="px-4 py-3 text-left">Judul</th>
                                 <th class="px-4 py-3 text-left">Pimpinan</th>
                                 <th class="px-4 py-3 text-left">Tanggal</th>
+                                <th class="px-4 py-3 text-left">Berangkat / Pulang</th>
+                                <th class="px-4 py-3 text-left">Transportasi</th>
                                 <th class="px-4 py-3 text-center">Klasifikasi Wilayah</th>
                                 <th class="px-4 py-3 text-left w-40">Aksi</th>
                             </tr>
@@ -66,6 +68,18 @@
                                         </span>
                                     </td>
 
+                                    <td class="px-4 py-3 text-slate-600">
+                                        {{ $item->boarding_date ? \Carbon\Carbon::parse($item->boarding_date)->format('d M Y') : '-' }}
+                                        <br>
+                                        <span class="text-xs text-slate-500">
+                                            {{ $item->return_date ? \Carbon\Carbon::parse($item->return_date)->format('d M Y') : '-' }}
+                                        </span>
+                                    </td>
+
+                                    <td class="px-4 py-3 text-slate-600">
+                                        {{ $item->transportation ?? '-' }}
+                                    </td>
+
                                     <td class="px-4 py-3 text-center">
                                         @if ($item->region_classification == 'dalam_daerah')
                                             <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">Dalam
@@ -93,6 +107,18 @@
                                                 {{ $item->assignmentUsers->isNotEmpty() ? 'Ubah Petugas' : 'Tugaskan' }}
                                             </a>
 
+                                            @if ($item->assignmentUsers->isNotEmpty())
+                                                <a href="{{ route('assignments.print-sppd', $item->id) }}"
+                                                    class="w-full text-center px-3 py-2 bg-emerald-600 text-white rounded-md text-xs">
+                                                    Cetak SPPD
+                                                </a>
+                                            @else
+                                                <span
+                                                    class="w-full text-center px-3 py-2 bg-slate-200 text-slate-500 rounded-md text-xs">
+                                                    Cetak SPPD
+                                                </span>
+                                            @endif
+
                                             <div class="flex gap-2">
                                                 <a href="{{ route('assignments.show', $item->id) }}"
                                                     class="px-3 py-1 bg-blue-600 text-white rounded-md text-xs">
@@ -119,7 +145,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center py-6 text-slate-500">
+                                    <td colspan="8" class="text-center py-6 text-slate-500">
                                         Belum ada data tugas
                                     </td>
                                 </tr>

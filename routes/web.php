@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AssignmentController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,6 +27,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('attendeds', App\Http\Controllers\AttendedController::class);
 
     // Assignment Routes
+    Route::get('assignments/{assignment}/print-sppd', [AssignmentController::class, 'printSppd'])
+        ->name('assignments.print-sppd');
     Route::resource('assignments', App\Http\Controllers\AssignmentController::class);
 
     // AssignmentUser Routes

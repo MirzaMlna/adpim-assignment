@@ -19,6 +19,7 @@ class User extends Authenticatable
         'name',
         'rank',
         'job_title',
+        'assignment_regulation_level',
         'role',
         'is_active',
         'note',
