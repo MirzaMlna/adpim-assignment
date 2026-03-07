@@ -233,8 +233,11 @@ class SppdDocxExporter
     private function replaceKnownPlaceholders(string $text, array $values): string
     {
         $patterns = [
-            // Handle custom formula in template: "{assignments - date} + {assignments - day_count}".
+            // Handle custom formula in template.
+            // Specific case for signature block: assignment date minus one day.
+            '/\{assignments\s*[-\x{2013}]\s*date\}\s*\+\s*\{assignments\s*[-\x{2013}]\s*day_count\}\s*[-\x{2013}\x{2212}]\s*1/u' => $values['assignment_issue_date'],
             '/\{assignments\s*[-\x{2013}]\s*date\}\s*\+\s*\{assignments\s*[-\x{2013}]\s*day_count\}/u' => $values['assignment_return_date'],
+            '/\{assignments\s*[-\x{2013}]\s*boarding_date\}\s*\+\s*\{assignments\s*[-\x{2013}]\s*day_count\}\s*[-\x{2013}\x{2212}]\s*1/u' => $values['assignment_return_date'],
             '/\{assignments\s*[-\x{2013}]\s*boarding_date\}\s*\+\s*\{assignments\s*[-\x{2013}]\s*day_count\}/u' => $values['assignment_return_date'],
             '/\{users\s*[-\x{2013}]\s*name\}/u' => $values['user_name'],
             '/\{users\s*[-\x{2013}]\s*nip\}/u' => $values['user_nip'],
@@ -295,10 +298,8 @@ class SppdDocxExporter
 
         $returnDateForSppd = $boardingDate
             ? $boardingDate->copy()->addDays(max(0, $dayCount - 1))
-            : $assignment->return_date;
-        $issueDate = $returnDateForSppd instanceof Carbon
-            ? $returnDateForSppd->copy()
-            : ($returnDateForSppd ? Carbon::parse($returnDateForSppd) : $assignmentDate->copy());
+            : null;
+        $issueDate = $assignmentDate->copy()->subDay();
 
         return [
             'user_name' => $this->valueOrDash($user->name),
@@ -534,3 +535,4 @@ class SppdDocxExporter
         return (string) $number;
     }
 }
+

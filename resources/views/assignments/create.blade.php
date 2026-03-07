@@ -146,15 +146,6 @@
 
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-2">
-                                Tanggal Pulang Petugas
-                            </label>
-                            <input type="date" name="return_date" value="{{ old('return_date') }}"
-                                class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800"
-                                required>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">
                                 Jam
                             </label>
                             <input type="time" name="time" value="{{ old('time') }}"

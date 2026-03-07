@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Assignment;
 use App\Models\Attended;
 use App\Services\SppdDocxExporter;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -29,19 +30,20 @@ class AssignmentController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate($this->rules(), $this->messages());
+        $resolvedReturnDate = $this->resolveReturnDate($validated['boarding_date'], (int) $validated['day_count']);
 
         try {
             $assignment = null;
             $attendedIds = collect($validated['attended_ids'])->unique()->values()->all();
 
-            DB::transaction(function () use (&$assignment, $validated, $attendedIds) {
+            DB::transaction(function () use (&$assignment, $validated, $attendedIds, $resolvedReturnDate) {
                 $assignment = Assignment::create([
                     'code' => $this->generateAssignmentCode($validated['date']),
                     'title' => $validated['title'],
                     'agency' => $validated['agency'],
                     'date' => $validated['date'],
                     'boarding_date' => $validated['boarding_date'],
-                    'return_date' => $validated['return_date'],
+                    'return_date' => $resolvedReturnDate,
                     'transportation' => $validated['transportation'],
                     'time' => $validated['time'],
                     'day_count' => $validated['day_count'],
@@ -74,6 +76,7 @@ class AssignmentController extends Controller
     public function update(Request $request, Assignment $assignment)
     {
         $validated = $request->validate($this->rules(), $this->messages());
+        $resolvedReturnDate = $this->resolveReturnDate($validated['boarding_date'], (int) $validated['day_count']);
 
         $attendedIds = collect($validated['attended_ids'])->unique()->values()->all();
         $currentAttendedIds = $assignment->attendeds()
@@ -92,7 +95,7 @@ class AssignmentController extends Controller
             && $assignment->agency === $validated['agency']
             && (string) optional($assignment->date)->format('Y-m-d') === (string) $validated['date']
             && (string) optional($assignment->boarding_date)->format('Y-m-d') === (string) $validated['boarding_date']
-            && (string) optional($assignment->return_date)->format('Y-m-d') === (string) $validated['return_date']
+            && (string) optional($assignment->return_date)->format('Y-m-d') === (string) $resolvedReturnDate
             && $assignment->transportation === $validated['transportation']
             && $assignment->time === $validated['time']
             && (int) $assignment->day_count === (int) $validated['day_count']
@@ -108,13 +111,13 @@ class AssignmentController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($assignment, $validated, $attendedIds) {
+            DB::transaction(function () use ($assignment, $validated, $attendedIds, $resolvedReturnDate) {
                 $assignment->update([
                     'title' => $validated['title'],
                     'agency' => $validated['agency'],
                     'date' => $validated['date'],
                     'boarding_date' => $validated['boarding_date'],
-                    'return_date' => $validated['return_date'],
+                    'return_date' => $resolvedReturnDate,
                     'transportation' => $validated['transportation'],
                     'time' => $validated['time'],
                     'day_count' => $validated['day_count'],
@@ -210,7 +213,6 @@ class AssignmentController extends Controller
             'agency' => 'required|string|max:255',
             'date' => 'required|date',
             'boarding_date' => 'required|date',
-            'return_date' => 'required|date|after_or_equal:boarding_date',
             'transportation' => 'required|string|max:255',
             'time' => 'required|date_format:H:i',
             'day_count' => 'required|integer|min:1',
@@ -232,8 +234,6 @@ class AssignmentController extends Controller
             'agency.required' => 'Penyelenggara wajib diisi.',
             'date.required' => 'Tanggal wajib diisi.',
             'boarding_date.required' => 'Tanggal berangkat petugas wajib diisi.',
-            'return_date.required' => 'Tanggal pulang petugas wajib diisi.',
-            'return_date.after_or_equal' => 'Tanggal pulang tidak boleh lebih awal dari tanggal berangkat.',
             'transportation.required' => 'Transportasi wajib diisi.',
             'time.required' => 'Jam wajib diisi.',
             'time.date_format' => 'Format jam tidak valid.',
@@ -244,5 +244,13 @@ class AssignmentController extends Controller
             'fee_per_day.min' => 'Bayaran per hari tidak boleh minus.',
             'region_classification.required' => 'Klasifikasi wilayah wajib dipilih.',
         ];
+    }
+
+    private function resolveReturnDate(string $boardingDate, int $dayCount): string
+    {
+        $safeDayCount = max(1, $dayCount);
+        $returnDate = Carbon::parse($boardingDate)->addDays($safeDayCount - 1);
+
+        return $returnDate->format('Y-m-d');
     }
 }

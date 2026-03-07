@@ -26,8 +26,6 @@
                                 <th class="px-4 py-3 text-left">Judul</th>
                                 <th class="px-4 py-3 text-left">Pimpinan</th>
                                 <th class="px-4 py-3 text-left">Tanggal</th>
-                                <th class="px-4 py-3 text-left">Berangkat / Pulang</th>
-                                <th class="px-4 py-3 text-left">Transportasi</th>
                                 <th class="px-4 py-3 text-center">Klasifikasi Wilayah</th>
                                 <th class="px-4 py-3 text-left w-40">Aksi</th>
                             </tr>
@@ -66,18 +64,6 @@
                                         <span class="text-xs text-slate-500">
                                             {{ \Carbon\Carbon::parse($item->time)->format('H:i') }} WITA
                                         </span>
-                                    </td>
-
-                                    <td class="px-4 py-3 text-slate-600">
-                                        {{ $item->boarding_date ? \Carbon\Carbon::parse($item->boarding_date)->format('d M Y') : '-' }}
-                                        <br>
-                                        <span class="text-xs text-slate-500">
-                                            {{ $item->return_date ? \Carbon\Carbon::parse($item->return_date)->format('d M Y') : '-' }}
-                                        </span>
-                                    </td>
-
-                                    <td class="px-4 py-3 text-slate-600">
-                                        {{ $item->transportation ?? '-' }}
                                     </td>
 
                                     <td class="px-4 py-3 text-center">
