@@ -70,39 +70,47 @@
                                     </td>
 
                                     <td class="px-4 py-3">
-                                        <div class="flex justify-center gap-2">
-                                            <a href="{{ route('assignments.show', $assignment->id) }}"
-                                                class="px-3 py-1 bg-blue-600 text-white rounded-md text-xs">
-                                                Detail
-                                            </a>
+                                        <div class="flex flex-col items-center gap-2">
 
                                             @if ($assignmentUser)
-                                                <a href="{{ route('assignment-users.edit', $assignmentUser->id) }}"
-                                                    class="px-3 py-1 bg-amber-500 text-white rounded-md text-xs">
-                                                    Edit
-                                                </a>
-
                                                 <a href="{{ route('assignments.print-sppd', $assignment->id) }}"
-                                                    class="px-3 py-1 bg-emerald-600 text-white rounded-md text-xs">
+                                                    class="px-3 py-1 bg-emerald-600 text-white rounded-md text-xs w-full text-center">
                                                     Cetak SPPD
                                                 </a>
-                                            @else
-                                                <a href="{{ route('assignment-users.create', ['assignment_id' => $assignment->id]) }}"
-                                                    class="px-3 py-1 bg-sky-600 text-white rounded-md text-xs">
-                                                    Tugaskan
-                                                </a>
                                             @endif
 
-                                            @if ($assignmentUser)
-                                                <form action="{{ route('assignment-users.destroy', $assignmentUser->id) }}"
-                                                    method="POST" onsubmit="return confirm('Hapus data?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button class="px-3 py-1 bg-red-600 text-white rounded-md text-xs">
-                                                        Hapus
-                                                    </button>
-                                                </form>
-                                            @endif
+                                            <div class="flex gap-2">
+
+                                                <a href="{{ route('assignments.show', $assignment->id) }}"
+                                                    class="px-3 py-1 bg-blue-600 text-white rounded-md text-xs">
+                                                    Detail
+                                                </a>
+
+                                                @if ($assignmentUser)
+                                                    <a href="{{ route('assignment-users.edit', $assignmentUser->id) }}"
+                                                        class="px-3 py-1 bg-amber-500 text-white rounded-md text-xs">
+                                                        Edit
+                                                    </a>
+
+                                                    <form
+                                                        action="{{ route('assignment-users.destroy', $assignmentUser->id) }}"
+                                                        method="POST" onsubmit="return confirm('Hapus data?')">
+                                                        @csrf
+                                                        @method('DELETE')
+
+                                                        <button
+                                                            class="px-3 py-1 bg-red-600 text-white rounded-md text-xs">
+                                                            Hapus
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <a href="{{ route('assignment-users.create', ['assignment_id' => $assignment->id]) }}"
+                                                        class="px-3 py-1 bg-sky-600 text-white rounded-md text-xs">
+                                                        Tugaskan
+                                                    </a>
+                                                @endif
+
+                                            </div>
                                         </div>
                                     </td>
 

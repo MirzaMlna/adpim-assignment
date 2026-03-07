@@ -7,21 +7,44 @@
                 </h2>
             </div>
 
-            <a href="{{ route('users.create') }}"
-                class="inline-flex items-center justify-center bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-lg shadow-sm transition">
-                + Tambah User
-            </a>
+            <div class="flex flex-col sm:flex-row gap-2">
+                <a href="{{ route('users.create') }}"
+                    class="inline-flex items-center justify-center bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-lg shadow-sm transition">
+                    + Tambah User
+                </a>
+            </div>
         </div>
     </x-slot>
 
     <div class="py-10">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-            @if (session('success'))
-                <div class="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-                    {{ session('success') }}
-                </div>
-            @endif
+            <x-flash-alerts />
+
+            <div class="mb-4 bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+                <form action="{{ route('users.import') }}" method="POST" enctype="multipart/form-data"
+                    class="flex flex-col md:flex-row md:items-end gap-3">
+                    @csrf
+
+                    <div class="w-full md:w-auto md:min-w-[320px]">
+                        <label class="block text-sm font-medium text-slate-700 mb-2">
+                            Import User (XLSX)
+                        </label>
+                        <input type="file" name="file"
+                            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                            class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800"
+                            required>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Header wajib: sub_division,email,password,nip,name,rank,job_title,role
+                        </p>
+                    </div>
+
+                    <button type="submit"
+                        class="inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg shadow-sm transition">
+                        Import XLSX
+                    </button>
+                </form>
+            </div>
 
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
 

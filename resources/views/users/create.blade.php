@@ -56,7 +56,7 @@
                             <label class="block text-sm font-medium text-slate-700 mb-2">
                                 NIP
                             </label>
-                            <input type="number" name="nip" value="{{ old('nip') }}"
+                            <input type="text" name="nip" value="{{ old('nip') }}"
                                 class="w-full rounded-lg border-slate-300 focus:border-slate-800 focus:ring-slate-800">
                         </div>
 

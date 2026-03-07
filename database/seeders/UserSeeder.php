@@ -2,34 +2,32 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
 use App\Models\SubDivision;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $subs = SubDivision::all();
-        if ($subs->count() == 0) {
-            $subs = collect([
-                SubDivision::create(['name' => 'Sub Bidang Dokumentasi Pimpinan']),
-            ]);
-        }
-        $roles = ['ADMIN', 'STAFF', 'PIMPINAN ADPIM'];
-        foreach (range(1, 10) as $i) {
-            User::create([
-                'sub_division_id' => $subs->random()->id,
-                'email' => 'user' . $i . '@adpim.com',
+        $subDivision = SubDivision::firstOrCreate([
+            'name' => 'Sub Bidang Dokumentasi Pimpinan',
+        ]);
+
+        User::updateOrCreate(
+            ['email' => 'test@adpim.com'],
+            [
+                'sub_division_id' => $subDivision->id,
                 'password' => 'password',
-                'nip' => '12345678' . $i,
-                'name' => fake()->name(),
-                'rank' => 'Rank ' . $i,
-                'job_title' => 'Job Title ' . $i,
-                'role' => $roles[array_rand($roles)],
+                'nip' => '-',
+                'name' => 'Super Admin',
+                'rank' => 'Administrator',
+                'job_title' => 'Super Admin',
+                'assignment_regulation_level' => '-',
+                'role' => 'admin',
                 'is_active' => true,
-                'note' => 'Seeder user',
-            ]);
-        }
+                'note' => 'Akun super admin (seeder)',
+            ]
+        );
     }
 }

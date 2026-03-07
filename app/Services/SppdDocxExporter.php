@@ -233,6 +233,9 @@ class SppdDocxExporter
     private function replaceKnownPlaceholders(string $text, array $values): string
     {
         $patterns = [
+            // Handle custom formula in template: "{assignments - date} + {assignments - day_count}".
+            '/\{assignments\s*[-\x{2013}]\s*date\}\s*\+\s*\{assignments\s*[-\x{2013}]\s*day_count\}/u' => $values['assignment_return_date'],
+            '/\{assignments\s*[-\x{2013}]\s*boarding_date\}\s*\+\s*\{assignments\s*[-\x{2013}]\s*day_count\}/u' => $values['assignment_return_date'],
             '/\{users\s*[-\x{2013}]\s*name\}/u' => $values['user_name'],
             '/\{users\s*[-\x{2013}]\s*nip\}/u' => $values['user_nip'],
             '/\{users\s*[-\x{2013}]\s*rank\}/u' => $values['user_rank'],
@@ -283,8 +286,19 @@ class SppdDocxExporter
         $assignmentDate = $assignment->date instanceof Carbon
             ? $assignment->date->copy()
             : Carbon::parse($assignment->date);
+        $dayCount = max(1, (int) $assignment->day_count);
+        $boardingDate = $assignment->boarding_date
+            ? ($assignment->boarding_date instanceof Carbon
+                ? $assignment->boarding_date->copy()
+                : Carbon::parse($assignment->boarding_date))
+            : null;
 
-        $issueDate = $assignmentDate->copy()->subDay();
+        $returnDateForSppd = $boardingDate
+            ? $boardingDate->copy()->addDays(max(0, $dayCount - 1))
+            : $assignment->return_date;
+        $issueDate = $returnDateForSppd instanceof Carbon
+            ? $returnDateForSppd->copy()
+            : ($returnDateForSppd ? Carbon::parse($returnDateForSppd) : $assignmentDate->copy());
 
         return [
             'user_name' => $this->valueOrDash($user->name),
@@ -299,9 +313,9 @@ class SppdDocxExporter
             'assignment_issue_date' => $this->formatIndonesianDate($issueDate),
             'assignment_location_detail' => $this->valueOrDash($assignment->location_detail, $assignment->location),
             'assignment_location' => $this->valueOrDash($assignment->location),
-            'assignment_day_count' => $this->formatDayCount((int) $assignment->day_count),
-            'assignment_boarding_date' => $this->formatIndonesianDate($assignment->boarding_date),
-            'assignment_return_date' => $this->formatIndonesianDate($assignment->return_date),
+            'assignment_day_count' => $this->formatDayCount($dayCount),
+            'assignment_boarding_date' => $this->formatIndonesianDate($boardingDate ?? $assignment->boarding_date),
+            'assignment_return_date' => $this->formatIndonesianDate($returnDateForSppd),
             'assignment_transportation' => $this->valueOrDash($assignment->transportation),
             'assignment_description' => $this->valueOrDash($assignment->description),
             'sheet_number' => (string) $sheetNumber,

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AssignmentController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -18,6 +19,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // User Routes
+    Route::post('users/import', [UserController::class, 'import'])->name('users.import');
     Route::resource('users', App\Http\Controllers\UserController::class);
 
     // SubDivision Routes
