@@ -141,7 +141,7 @@
                     @if ($assignment->assignmentUsers->isNotEmpty())
                         <a href="{{ route('assignments.print-sppd', $assignment->id) }}"
                             class="px-4 py-2 bg-emerald-600 text-white rounded-lg mr-2">
-                            Cetak SPPD
+                            CETAK SPT/SPPD
                         </a>
                     @endif
                     <a href="{{ route('assignments.index') }}" class="px-4 py-2 bg-slate-800 text-white rounded-lg">

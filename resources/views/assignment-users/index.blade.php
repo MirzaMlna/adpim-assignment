@@ -75,7 +75,7 @@
                                             @if ($assignmentUser)
                                                 <a href="{{ route('assignments.print-sppd', $assignment->id) }}"
                                                     class="px-3 py-1 bg-emerald-600 text-white rounded-md text-xs w-full text-center">
-                                                    Cetak SPPD
+                                                    CETAK SPT/SPPD
                                                 </a>
                                             @endif
 

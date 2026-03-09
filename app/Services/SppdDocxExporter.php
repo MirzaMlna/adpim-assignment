@@ -16,12 +16,14 @@ use ZipArchive;
 class SppdDocxExporter
 {
     private const WORD_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+    private const TEMPLATE_TYPE_SPPD = 'sppd';
+    private const TEMPLATE_TYPE_SPT = 'spt';
 
     public function export(Assignment $assignment): string
     {
-        $templatePath = base_path('LEMBAR_SPPD.docx');
+        [$templatePath, $templateType, $templateDisplayName] = $this->resolveTemplate($assignment);
         if (! File::exists($templatePath)) {
-            throw new RuntimeException('Template LEMBAR_SPPD.docx tidak ditemukan di root project.');
+            throw new RuntimeException("Template {$templateDisplayName} tidak ditemukan di root project.");
         }
 
         $users = $assignment->assignmentUsers
@@ -50,14 +52,16 @@ class SppdDocxExporter
             $documentXml,
             is_string($numberingXml) ? $numberingXml : null,
             $assignment,
-            $users
+            $users,
+            $templateType
         );
 
         $tempDir = storage_path('app/tmp');
         File::ensureDirectoryExists($tempDir);
 
         $safeCode = Str::slug((string) $assignment->code ?: 'assignment');
-        $fileName = "sppd-{$safeCode}-" . now()->format('YmdHis') . '.docx';
+        $filePrefix = $templateType === self::TEMPLATE_TYPE_SPT ? 'spt' : 'sppd';
+        $fileName = "{$filePrefix}-{$safeCode}-" . now()->format('YmdHis') . '.docx';
         $outputPath = $tempDir . DIRECTORY_SEPARATOR . $fileName;
 
         if (! copy($templatePath, $outputPath)) {
@@ -82,7 +86,8 @@ class SppdDocxExporter
         string $documentXml,
         ?string $numberingXml,
         Assignment $assignment,
-        Collection $users
+        Collection $users,
+        string $templateType
     ): array {
         [$documentOpenTag, $templateBodyXml, $sectPrXml] = $this->extractTemplateParts($documentXml);
         $numberingContext = $this->createNumberingContext($numberingXml);
@@ -90,21 +95,30 @@ class SppdDocxExporter
         $pages = [];
         $sheetNumber = 1;
 
-        foreach ($users as $user) {
-            $pageXml = $this->renderSinglePage(
+        if ($templateType === self::TEMPLATE_TYPE_SPT) {
+            $pages[] = $this->renderCombinedSptPage(
                 $documentOpenTag,
                 $templateBodyXml,
                 $assignment,
-                $user,
-                $sheetNumber
+                $users
             );
+        } else {
+            foreach ($users as $user) {
+                $pageXml = $this->renderSinglePage(
+                    $documentOpenTag,
+                    $templateBodyXml,
+                    $assignment,
+                    $user,
+                    $sheetNumber
+                );
 
-            if ($numberingContext !== null) {
-                $pageXml = $this->remapPageNumbering($pageXml, $numberingContext);
+                if ($numberingContext !== null) {
+                    $pageXml = $this->remapPageNumbering($pageXml, $numberingContext);
+                }
+
+                $pages[] = $pageXml;
+                $sheetNumber++;
             }
-
-            $pages[] = $pageXml;
-            $sheetNumber++;
         }
 
         $bodyInnerXml = implode($this->pageBreakXml(), $pages) . $sectPrXml;
@@ -184,6 +198,7 @@ class SppdDocxExporter
 
         $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('w', self::WORD_NS);
+        $isOperationalOfficer = $this->isOperationalOfficer($user);
 
         $values = $this->buildReplacementValues($assignment, $user, $sheetNumber);
         $legacyQueue = [
@@ -194,32 +209,67 @@ class SppdDocxExporter
         ];
 
         foreach ($xpath->query('//w:body//w:p') as $paragraph) {
-            $textNodes = $xpath->query('.//w:t', $paragraph);
-            if (! $textNodes || $textNodes->length === 0) {
+            $paragraphText = $this->getParagraphText($xpath, $paragraph);
+            if ($this->shouldHideIdentityLineForOperationalOfficer($paragraphText, $isOperationalOfficer)) {
+                if ($paragraph->parentNode) {
+                    $paragraph->parentNode->removeChild($paragraph);
+                }
                 continue;
             }
 
-            $originalText = '';
-            foreach ($textNodes as $textNode) {
-                $originalText .= $textNode->textContent;
-            }
-
-            $updatedText = $this->replaceKnownPlaceholders($originalText, $values);
-            $updatedText = $this->replaceLegacyPlaceholders($updatedText, $legacyQueue);
-
-            if ($updatedText === $originalText) {
-                continue;
-            }
-
-            $textNodes->item(0)->nodeValue = $updatedText;
-            for ($i = 1; $i < $textNodes->length; $i++) {
-                $textNodes->item($i)->nodeValue = '';
-            }
+            $this->replaceParagraphPlaceholders($xpath, $paragraph, $values, $legacyQueue);
         }
 
         $body = $dom->getElementsByTagNameNS(self::WORD_NS, 'body')->item(0);
         if (! $body) {
             throw new RuntimeException('Gagal membaca body halaman SPPD.');
+        }
+
+        $innerXml = '';
+        foreach ($body->childNodes as $child) {
+            $innerXml .= $dom->saveXML($child);
+        }
+
+        return $innerXml;
+    }
+
+    private function renderCombinedSptPage(
+        string $documentOpenTag,
+        string $templateBodyXml,
+        Assignment $assignment,
+        Collection $users
+    ): string {
+        $pageXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            . $documentOpenTag
+            . '<w:body>'
+            . $templateBodyXml
+            . '</w:body></w:document>';
+
+        $dom = new DOMDocument();
+        if (! $dom->loadXML($pageXml)) {
+            throw new RuntimeException('Gagal memuat halaman template SPT.');
+        }
+
+        $xpath = new DOMXPath($dom);
+        $xpath->registerNamespace('w', self::WORD_NS);
+
+        $this->injectSptRecipients($xpath, $assignment, $users);
+
+        $values = $this->buildReplacementValues($assignment, null, 1);
+        $legacyQueue = [
+            $values['user_assignment_regulation_level'],
+            $values['assignment_transportation'],
+            $values['assignment_boarding_date'],
+            $values['assignment_return_date'],
+        ];
+
+        foreach ($xpath->query('//w:body//w:p') as $paragraph) {
+            $this->replaceParagraphPlaceholders($xpath, $paragraph, $values, $legacyQueue);
+        }
+
+        $body = $dom->getElementsByTagNameNS(self::WORD_NS, 'body')->item(0);
+        if (! $body) {
+            throw new RuntimeException('Gagal membaca body halaman SPT.');
         }
 
         $innerXml = '';
@@ -243,6 +293,7 @@ class SppdDocxExporter
             '/\{users\s*[-\x{2013}]\s*nip\}/u' => $values['user_nip'],
             '/\{users\s*[-\x{2013}]\s*rank\}/u' => $values['user_rank'],
             '/\{users\s*[-\x{2013}]\s*job_title\}/u' => $values['user_job_title'],
+            '/\{attendeds\s*[-\x{2013}]\s*rank[^}]*\}/u' => $values['attendeds_rank_kalsel'],
             '/\{users\s*[-\x{2013}]\s*assignment_regulation_level\}/u' => $values['user_assignment_regulation_level'],
             '/\{assignments\s*[-\x{2013}]\s*title\}/u' => $values['assignment_title'],
             '/\{assignments\s*[-\x{2013}]\s*date\}/u' => $values['assignment_date'],
@@ -284,7 +335,64 @@ class SppdDocxExporter
         return $result ?? $text;
     }
 
-    private function buildReplacementValues(Assignment $assignment, User $user, int $sheetNumber): array
+    private function replaceParagraphPlaceholders(
+        DOMXPath $xpath,
+        mixed $paragraph,
+        array $values,
+        array &$legacyQueue
+    ): void {
+        $tabNodes = $xpath->query('.//w:tab', $paragraph);
+        if ($tabNodes && $tabNodes->length > 0) {
+            $this->replaceParagraphPlaceholdersNodeWise($xpath, $paragraph, $values, $legacyQueue);
+            return;
+        }
+
+        $textNodes = $xpath->query('.//w:t', $paragraph);
+        if (! $textNodes || $textNodes->length === 0) {
+            return;
+        }
+
+        $originalText = '';
+        foreach ($textNodes as $textNode) {
+            $originalText .= $textNode->textContent;
+        }
+
+        $updatedText = $this->replaceKnownPlaceholders($originalText, $values);
+        $updatedText = $this->replaceLegacyPlaceholders($updatedText, $legacyQueue);
+
+        if ($updatedText === $originalText) {
+            return;
+        }
+
+        $textNodes->item(0)->textContent = $updatedText;
+        for ($i = 1; $i < $textNodes->length; $i++) {
+            $textNodes->item($i)->nodeValue = '';
+        }
+    }
+
+    private function replaceParagraphPlaceholdersNodeWise(
+        DOMXPath $xpath,
+        mixed $paragraph,
+        array $values,
+        array &$legacyQueue
+    ): void {
+        $textNodes = $xpath->query('.//w:t', $paragraph);
+        if (! $textNodes || $textNodes->length === 0) {
+            return;
+        }
+
+        foreach ($textNodes as $textNode) {
+            $originalText = $textNode->textContent;
+            $updatedText = $this->replaceKnownPlaceholders($originalText, $values);
+            $updatedText = $this->replaceLegacyPlaceholders($updatedText, $legacyQueue);
+
+            if ($updatedText !== $originalText) {
+                $textNode->textContent = $updatedText;
+            }
+        }
+    }
+
+    private function buildReplacementValues(Assignment $assignment, ?User $user, int $sheetNumber): array
     {
         $assignmentDate = $assignment->date instanceof Carbon
             ? $assignment->date->copy()
@@ -300,13 +408,16 @@ class SppdDocxExporter
             ? $boardingDate->copy()->addDays(max(0, $dayCount - 1))
             : null;
         $issueDate = $assignmentDate->copy()->subDay();
+        $attendedsRankKalsel = $this->buildAttendedsRankKalselText($assignment);
+        $userRankForJabatan = $this->valueOrDash($user?->rank, $user?->job_title);
+        $userJobTitleForPangkat = $this->valueOrDash($user?->job_title, $user?->rank);
 
         return [
-            'user_name' => $this->valueOrDash($user->name),
-            'user_nip' => $this->valueOrDash($user->nip),
-            'user_rank' => $this->valueOrDash($user->rank),
-            'user_job_title' => $this->valueOrDash($user->job_title),
-            'user_assignment_regulation_level' => $this->valueOrDash($user->assignment_regulation_level),
+            'user_name' => $this->valueOrDash($user?->name),
+            'user_nip' => $this->valueOrDash($user?->nip),
+            'user_rank' => $userJobTitleForPangkat,
+            'user_job_title' => $userRankForJabatan,
+            'user_assignment_regulation_level' => $this->valueOrDash($user?->assignment_regulation_level),
             'assignment_code' => $this->valueOrDash($assignment->code),
             'assignment_number' => $this->valueOrDash($assignment->code),
             'assignment_title' => $this->valueOrDash($assignment->title),
@@ -319,8 +430,287 @@ class SppdDocxExporter
             'assignment_return_date' => $this->formatIndonesianDate($returnDateForSppd),
             'assignment_transportation' => $this->valueOrDash($assignment->transportation),
             'assignment_description' => $this->valueOrDash($assignment->description),
+            'attendeds_rank_kalsel' => $attendedsRankKalsel,
             'sheet_number' => (string) $sheetNumber,
         ];
+    }
+
+    private function injectSptRecipients(DOMXPath $xpath, Assignment $assignment, Collection $users): void
+    {
+        $paragraphNodes = $xpath->query('//w:body/w:p');
+        if (! $paragraphNodes || $paragraphNodes->length === 0) {
+            return;
+        }
+
+        $paragraphs = [];
+        foreach ($paragraphNodes as $index => $paragraphNode) {
+            $text = $this->getParagraphText($xpath, $paragraphNode);
+            $normalizedText = $this->normalizeTextForComparison($text);
+
+            $paragraphs[$index] = [
+                'index' => $index,
+                'node' => $paragraphNode,
+                'text' => $text,
+                'normalized_text' => $normalizedText,
+                'is_empty' => trim($text) === '',
+            ];
+        }
+
+        $kepadaIndex = null;
+        $untukIndex = null;
+        foreach ($paragraphs as $paragraph) {
+            $compact = str_replace(' ', '', $paragraph['normalized_text']);
+            if ($kepadaIndex === null && str_starts_with($compact, 'kepada')) {
+                $kepadaIndex = $paragraph['index'];
+            }
+
+            if ($untukIndex === null && str_starts_with($compact, 'untuk')) {
+                $untukIndex = $paragraph['index'];
+            }
+        }
+
+        if (! is_int($kepadaIndex) || ! is_int($untukIndex) || $untukIndex <= $kepadaIndex) {
+            return;
+        }
+
+        $recipientStart = $kepadaIndex + 1;
+        $recipientEnd = $untukIndex - 1;
+        if ($recipientStart > $recipientEnd) {
+            return;
+        }
+
+        $recipientParagraphs = [];
+        for ($idx = $recipientStart; $idx <= $recipientEnd; $idx++) {
+            $paragraph = $paragraphs[$idx] ?? null;
+            if (! $paragraph) {
+                continue;
+            }
+
+            $recipientParagraphs[] = $paragraph;
+        }
+
+        if ($recipientParagraphs === []) {
+            return;
+        }
+
+        $nameLocalIndices = [];
+        $conditionLocalIndices = [];
+        $blankLocalIndex = null;
+        foreach ($recipientParagraphs as $localIndex => $paragraph) {
+            if ((bool) preg_match('/\{users\s*[-\x{2013}]\s*name\}/u', $paragraph['text'])) {
+                $nameLocalIndices[] = $localIndex;
+            }
+
+            if ($this->isSptConditionNoteParagraph($xpath, $paragraph['node'], $paragraph['normalized_text'])) {
+                $conditionLocalIndices[] = $localIndex;
+            }
+
+            if ($blankLocalIndex === null && $paragraph['is_empty']) {
+                $blankLocalIndex = $localIndex;
+            }
+        }
+
+        if (count($nameLocalIndices) < 2) {
+            return;
+        }
+
+        sort($nameLocalIndices);
+        sort($conditionLocalIndices);
+
+        $firstNameLocal = $nameLocalIndices[0];
+        $secondNameLocal = $nameLocalIndices[1];
+        $firstConditionLocal = $conditionLocalIndices[0] ?? null;
+
+        $firstBlockNodes = [];
+        for ($idx = $firstNameLocal; $idx <= max($firstNameLocal, $secondNameLocal - 1); $idx++) {
+            if (! isset($recipientParagraphs[$idx])) {
+                continue;
+            }
+
+            $firstBlockNodes[] = $recipientParagraphs[$idx]['node']->cloneNode(true);
+        }
+
+        $secondBlockEnd = is_int($firstConditionLocal) && $firstConditionLocal > $secondNameLocal
+            ? $firstConditionLocal - 1
+            : count($recipientParagraphs) - 1;
+
+        $secondBlockNodes = [];
+        for ($idx = $secondNameLocal; $idx <= $secondBlockEnd; $idx++) {
+            if (! isset($recipientParagraphs[$idx])) {
+                continue;
+            }
+
+            if ($this->isSptConditionNoteParagraph(
+                $xpath,
+                $recipientParagraphs[$idx]['node'],
+                $recipientParagraphs[$idx]['normalized_text']
+            )) {
+                continue;
+            }
+
+            $secondBlockNodes[] = $recipientParagraphs[$idx]['node']->cloneNode(true);
+        }
+
+        $separatorNode = null;
+        if (is_int($blankLocalIndex) && isset($recipientParagraphs[$blankLocalIndex])) {
+            $separatorNode = $recipientParagraphs[$blankLocalIndex]['node']->cloneNode(true);
+        }
+
+        $insertBeforeNode = $paragraphs[$untukIndex]['node'] ?? null;
+        if (! $insertBeforeNode || ! $insertBeforeNode->parentNode) {
+            return;
+        }
+
+        $parentNode = $insertBeforeNode->parentNode;
+
+        for ($idx = $recipientEnd; $idx >= $recipientStart; $idx--) {
+            $node = $paragraphs[$idx]['node'] ?? null;
+            if ($node && $node->parentNode) {
+                $node->parentNode->removeChild($node);
+            }
+        }
+
+        foreach ($users as $userIndex => $user) {
+            if (! $user instanceof User) {
+                continue;
+            }
+
+            $isOperationalOfficer = $this->isOperationalOfficer($user);
+
+            $templateNodes = $isOperationalOfficer && $secondBlockNodes !== []
+                ? $secondBlockNodes
+                : $firstBlockNodes;
+
+            if ($templateNodes === []) {
+                $templateNodes = $secondBlockNodes;
+            }
+
+            $values = $this->buildReplacementValues($assignment, $user, $userIndex + 1);
+            $legacyQueue = [];
+
+            foreach ($templateNodes as $templateNode) {
+                $node = $templateNode->cloneNode(true);
+                $nodeText = $this->getParagraphText($xpath, $node);
+                if ($this->shouldHideIdentityLineForOperationalOfficer($nodeText, $isOperationalOfficer)) {
+                    continue;
+                }
+
+                $this->replaceParagraphPlaceholders($xpath, $node, $values, $legacyQueue);
+                $parentNode->insertBefore($node, $insertBeforeNode);
+            }
+
+            if ($userIndex < ($users->count() - 1) && $separatorNode) {
+                $parentNode->insertBefore($separatorNode->cloneNode(true), $insertBeforeNode);
+            }
+        }
+    }
+
+    private function isSptConditionNoteParagraph(DOMXPath $xpath, mixed $paragraphNode, string $normalizedText): bool
+    {
+        if ($normalizedText === '') {
+            return false;
+        }
+
+        $compactText = str_replace(' ', '', $normalizedText);
+        $containsConditionWords = str_contains($compactText, 'nomor')
+            && str_contains($compactText, 'contoh')
+            && str_contains($compactText, 'petugaslayananoperasional');
+
+        if (! $containsConditionWords) {
+            return false;
+        }
+
+        $hasItalic = $xpath->query('./w:pPr/w:rPr/w:i | .//w:rPr/w:i', $paragraphNode);
+
+        return $hasItalic !== false && $hasItalic !== null && $hasItalic->length > 0;
+    }
+
+    private function getParagraphText(DOMXPath $xpath, mixed $paragraphNode): string
+    {
+        $text = '';
+        $textNodes = $xpath->query('.//w:t', $paragraphNode);
+        if (! $textNodes) {
+            return $text;
+        }
+
+        foreach ($textNodes as $textNode) {
+            $text .= $textNode->textContent;
+        }
+
+        return $text;
+    }
+
+    private function normalizeTextForComparison(string $text): string
+    {
+        $normalized = preg_replace('/\s+/u', ' ', trim($text)) ?? trim($text);
+
+        return function_exists('mb_strtolower')
+            ? mb_strtolower($normalized, 'UTF-8')
+            : strtolower($normalized);
+    }
+
+    private function isOperationalOfficerJobTitle(string $jobTitle): bool
+    {
+        return $this->normalizeTextForComparison($jobTitle)
+            === $this->normalizeTextForComparison('Petugas Layanan Operasional');
+    }
+
+    private function isOperationalOfficer(User $user): bool
+    {
+        return $this->isOperationalOfficerJobTitle((string) $user->job_title)
+            || $this->isOperationalOfficerJobTitle((string) $user->rank);
+    }
+
+    private function shouldHideIdentityLineForOperationalOfficer(string $paragraphText, bool $isOperationalOfficer): bool
+    {
+        if (! $isOperationalOfficer) {
+            return false;
+        }
+
+        $hasUserNipPlaceholder = preg_match('/\{users\s*[-\x{2013}]\s*nip\}/u', $paragraphText) === 1;
+        $hasUserRankPlaceholder = preg_match('/\{users\s*[-\x{2013}]\s*rank\}/u', $paragraphText) === 1;
+
+        return $hasUserNipPlaceholder || $hasUserRankPlaceholder;
+    }
+
+    private function resolveTemplate(Assignment $assignment): array
+    {
+        if ($assignment->region_classification === 'dalam_daerah') {
+            $candidates = [
+                ['file' => 'LEMBAR_SPT.docx', 'label' => 'LEMBAR_SPT.docx'],
+                ['file' => 'LEMBAR SPT.docx', 'label' => 'LEMBAR SPT.docx'],
+            ];
+
+            foreach ($candidates as $candidate) {
+                $path = base_path($candidate['file']);
+                if (File::exists($path)) {
+                    return [$path, self::TEMPLATE_TYPE_SPT, $candidate['label']];
+                }
+            }
+
+            return [base_path('LEMBAR_SPT.docx'), self::TEMPLATE_TYPE_SPT, 'LEMBAR_SPT.docx'];
+        }
+
+        return [base_path('LEMBAR_SPPD.docx'), self::TEMPLATE_TYPE_SPPD, 'LEMBAR_SPPD.docx'];
+    }
+
+    private function buildAttendedsRankKalselText(Assignment $assignment): string
+    {
+        $attendeds = $assignment->relationLoaded('attendeds')
+            ? $assignment->attendeds
+            : $assignment->attendeds()->get();
+
+        $ranks = $attendeds
+            ->pluck('rank_abbreviation')
+            ->map(fn ($rank) => trim((string) $rank))
+            ->filter()
+            ->values();
+
+        if ($ranks->isEmpty()) {
+            return '-';
+        }
+
+        return $ranks->implode(', ') . ' Kalsel,';
     }
 
     private function pageBreakXml(): string
@@ -535,4 +925,3 @@ class SppdDocxExporter
         return (string) $number;
     }
 }
-

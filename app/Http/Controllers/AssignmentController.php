@@ -150,10 +150,10 @@ class AssignmentController extends Controller
 
     public function printSppd(Assignment $assignment, SppdDocxExporter $exporter)
     {
-        $assignment->load('assignmentUsers.user');
+        $assignment->load(['assignmentUsers.user', 'attendeds']);
 
         if ($assignment->assignmentUsers->isEmpty()) {
-            return back()->with('warning', 'Petugas belum ditugaskan. Tugaskan petugas terlebih dahulu sebelum cetak SPPD.');
+            return back()->with('warning', 'Petugas belum ditugaskan. Tugaskan petugas terlebih dahulu sebelum cetak SPT/SPPD.');
         }
 
         try {
@@ -161,10 +161,11 @@ class AssignmentController extends Controller
         } catch (Throwable $e) {
             report($e);
 
-            return back()->with('error', 'Gagal membuat file SPPD. Periksa template LEMBAR_SPPD.docx lalu coba lagi.');
+            return back()->with('error', 'Gagal membuat file SPT/SPPD. Periksa template LEMBAR_SPT.docx atau LEMBAR_SPPD.docx lalu coba lagi.');
         }
 
-        $downloadName = 'SPPD-' . $assignment->code . '.docx';
+        $downloadPrefix = $assignment->region_classification === 'dalam_daerah' ? 'SPT' : 'SPPD';
+        $downloadName = $downloadPrefix . '-' . $assignment->code . '.docx';
 
         return response()->download($outputPath, $downloadName)->deleteFileAfterSend(true);
     }

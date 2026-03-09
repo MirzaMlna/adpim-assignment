@@ -96,12 +96,12 @@
                                             @if ($item->assignmentUsers->isNotEmpty())
                                                 <a href="{{ route('assignments.print-sppd', $item->id) }}"
                                                     class="w-full text-center px-3 py-2 bg-emerald-600 text-white rounded-md text-xs">
-                                                    Cetak SPPD
+                                                    CETAK SPT/SPPD
                                                 </a>
                                             @else
                                                 <span
                                                     class="w-full text-center px-3 py-2 bg-slate-200 text-slate-500 rounded-md text-xs">
-                                                    Cetak SPPD
+                                                    CETAK SPT/SPPD
                                                 </span>
                                             @endif
 
