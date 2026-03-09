@@ -22,7 +22,7 @@
                             <th>Pimpinan</th>
                             <th>Tanggal</th>
                             <th>Klasifikasi Wilayah</th>
-                            <th class="w-52">Aksi</th>
+                            <th class="w-72">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -62,37 +62,40 @@
                                 </td>
 
                                 <td>
-                                    <div class="space-y-2">
+                                    <div class="grid gap-2">
                                         <a href="{{ $item->assignmentUsers->isNotEmpty()
                                             ? route('assignment-users.edit', $item->assignmentUsers->first()->id)
                                             : route('assignment-users.create', ['assignment_id' => $item->id]) }}"
-                                            class="btn btn-info w-full text-xs">
+                                            class="btn btn-info w-full justify-center text-xs">
                                             {{ $item->assignmentUsers->isNotEmpty() ? 'Ubah Petugas' : 'Tugaskan' }}
                                         </a>
 
                                         @if ($item->assignmentUsers->isNotEmpty())
                                             <a href="{{ route('assignments.print-sppd', $item->id) }}"
-                                                class="btn btn-success w-full text-xs">
+                                                class="btn btn-success w-full justify-center text-xs">
                                                 Cetak SPT/SPPD
                                             </a>
                                         @else
-                                            <button type="button" class="btn btn-secondary w-full text-xs" disabled>
+                                            <button type="button" class="btn btn-secondary w-full justify-center text-xs" disabled>
                                                 Cetak SPT/SPPD
                                             </button>
                                         @endif
 
-                                        <div class="flex flex-wrap gap-2">
-                                            <a href="{{ route('assignments.show', $item->id) }}" class="btn btn-secondary px-3 py-1.5 text-xs">
+                                        <div class="grid grid-cols-3 gap-2">
+                                            <a href="{{ route('assignments.show', $item->id) }}"
+                                                class="btn btn-secondary w-full justify-center px-2 py-1.5 text-xs">
                                                 Detail
                                             </a>
-                                            <a href="{{ route('assignments.edit', $item->id) }}" class="btn btn-warning px-3 py-1.5 text-xs">
+                                            <a href="{{ route('assignments.edit', $item->id) }}"
+                                                class="btn btn-warning w-full justify-center px-2 py-1.5 text-xs">
                                                 Edit
                                             </a>
                                             <form action="{{ route('assignments.destroy', $item->id) }}" method="POST"
-                                                data-confirm="Hapus data giat ini?">
+                                                class="w-full" data-confirm="Hapus data giat ini?">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-danger px-3 py-1.5 text-xs"
+                                                <button type="submit"
+                                                    class="btn btn-danger w-full justify-center px-2 py-1.5 text-xs"
                                                     data-loading-text="Menghapus...">
                                                     Hapus
                                                 </button>

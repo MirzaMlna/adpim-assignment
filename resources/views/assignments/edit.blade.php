@@ -121,7 +121,7 @@
 
                         <div>
                             <label class="field-label">Jam</label>
-                            <input type="time" name="time" value="{{ old('time', $assignment->time) }}" required>
+                            <input type="time" name="time" value="{{ old('time', substr((string) $assignment->time, 0, 5)) }}" required>
                         </div>
 
                         <div>

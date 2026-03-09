@@ -36,14 +36,16 @@ class AssignmentController extends Controller
 
     public function store(Request $request)
     {
+        $this->normalizeTimeInput($request);
         $validated = $request->validate($this->rules(), $this->messages());
         $resolvedReturnDate = $this->resolveReturnDate($validated['boarding_date'], (int) $validated['day_count']);
+        $normalizedTime = $this->normalizeTimeString((string) $validated['time']);
 
         try {
             $assignment = null;
             $attendedIds = collect($validated['attended_ids'])->unique()->values()->all();
 
-            $payload = $this->buildAssignmentPayload($validated, $resolvedReturnDate);
+            $payload = $this->buildAssignmentPayload($validated, $resolvedReturnDate, $normalizedTime);
             $attempt = 0;
             $maxAttempt = 3;
 
@@ -91,9 +93,11 @@ class AssignmentController extends Controller
     public function update(Request $request, Assignment $assignment)
     {
         $originalDate = optional($assignment->date)->format('Y-m-d');
+        $this->normalizeTimeInput($request);
         $validated = $request->validate($this->rules(), $this->messages());
         $resolvedReturnDate = $this->resolveReturnDate($validated['boarding_date'], (int) $validated['day_count']);
-        $payload = $this->buildAssignmentPayload($validated, $resolvedReturnDate);
+        $normalizedTime = $this->normalizeTimeString((string) $validated['time']);
+        $payload = $this->buildAssignmentPayload($validated, $resolvedReturnDate, $normalizedTime);
 
         $attendedIds = collect($validated['attended_ids'])->unique()->values()->all();
         $currentAttendedIds = $assignment->attendeds()
@@ -114,7 +118,7 @@ class AssignmentController extends Controller
             && (string) optional($assignment->boarding_date)->format('Y-m-d') === (string) $validated['boarding_date']
             && (string) optional($assignment->return_date)->format('Y-m-d') === (string) $resolvedReturnDate
             && $assignment->transportation === $validated['transportation']
-            && $assignment->time === $validated['time']
+            && $this->normalizeTimeString((string) $assignment->time) === $normalizedTime
             && (int) $assignment->day_count === (int) $validated['day_count']
             && $assignment->location === $validated['location']
             && (string) $assignment->location_detail === (string) ($validated['location_detail'] ?? null)
@@ -224,7 +228,7 @@ class AssignmentController extends Controller
         return $prefix.str_pad((string) $nextSequence, 3, '0', STR_PAD_LEFT);
     }
 
-    private function buildAssignmentPayload(array $validated, string $resolvedReturnDate): array
+    private function buildAssignmentPayload(array $validated, string $resolvedReturnDate, string $normalizedTime): array
     {
         return [
             'title' => $validated['title'],
@@ -233,7 +237,7 @@ class AssignmentController extends Controller
             'boarding_date' => $validated['boarding_date'],
             'return_date' => $resolvedReturnDate,
             'transportation' => $validated['transportation'],
-            'time' => $validated['time'],
+            'time' => $normalizedTime,
             'day_count' => $validated['day_count'],
             'location' => $validated['location'],
             'location_detail' => $validated['location_detail'] ?? null,
@@ -260,6 +264,26 @@ class AssignmentController extends Controller
 
         $monthKey = Carbon::parse($date)->format('Y-m');
         Cache::forget('dashboard:summary:'.$monthKey);
+    }
+
+    private function normalizeTimeInput(Request $request): void
+    {
+        $time = (string) $request->input('time', '');
+
+        if (preg_match('/^\d{2}:\d{2}:\d{2}$/', $time) === 1) {
+            $request->merge([
+                'time' => substr($time, 0, 5),
+            ]);
+        }
+    }
+
+    private function normalizeTimeString(string $time): string
+    {
+        if (preg_match('/^\d{2}:\d{2}$/', $time) === 1) {
+            return $time.':00';
+        }
+
+        return $time;
     }
 
     private function rules(): array
