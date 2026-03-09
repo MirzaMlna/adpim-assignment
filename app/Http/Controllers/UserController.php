@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\SubDivision;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Throwable;
@@ -15,42 +15,24 @@ class UserController extends Controller
     public function index()
     {
         $users = User::with('subDivision')->latest()->paginate(10);
+
         return view('users.index', compact('users'));
     }
 
     public function create()
     {
         $subDivisions = SubDivision::all();
+
         return view('users.create', compact('subDivisions'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'sub_division_id' => 'required|exists:sub_divisions,id',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6',
-            'nip' => 'required|string|max:255',
-            'name' => 'required',
-            'rank' => 'required',
-            'job_title' => 'required',
-            'assignment_regulation_level' => 'nullable|string|max:255',
-            'role' => 'required',
-        ]);
+        $validated = $request->validate($this->userRules(), $this->userMessages());
 
-        User::create([
-            'sub_division_id' => $request->sub_division_id,
-            'email' => $request->email,
-            'password' => $request->password, // otomatis hash
-            'nip' => $request->nip,
-            'name' => $request->name,
-            'rank' => $request->rank,
-            'job_title' => $request->job_title,
-            'assignment_regulation_level' => $request->assignment_regulation_level,
-            'role' => $request->role,
-            'is_active' => $request->has('is_active'),
-            'note' => $request->note,
-        ]);
+        $payload = $this->mapUserPayload($validated, $request->boolean('is_active'));
+        User::create($payload);
+        $this->forgetCurrentDashboardCache();
 
         return redirect()->route('users.index')
             ->with('success', 'User berhasil ditambahkan.');
@@ -77,6 +59,7 @@ class UserController extends Controller
             $rows = $this->readXlsxRows($path);
         } catch (Throwable $e) {
             report($e);
+
             return back()->with('error', 'File XLSX tidak valid atau tidak bisa diproses.');
         }
 
@@ -96,8 +79,8 @@ class UserController extends Controller
         if ($missingHeaders !== []) {
             return back()->with(
                 'error',
-                'Header XLSX belum lengkap. Wajib ada: ' . implode(', ', $requiredHeaders) .
-                '. Kurang: ' . implode(', ', $missingHeaders) . '.'
+                'Header XLSX belum lengkap. Wajib ada: '.implode(', ', $requiredHeaders).
+                '. Kurang: '.implode(', ', $missingHeaders).'.'
             );
         }
 
@@ -105,6 +88,17 @@ class UserController extends Controller
         $skipped = 0;
         $errors = [];
         $seenEmails = [];
+        $existingEmails = User::query()
+            ->pluck('email')
+            ->mapWithKeys(fn ($email) => [strtolower((string) $email) => true])
+            ->all();
+        $subDivisionCache = SubDivision::query()
+            ->get(['id', 'name'])
+            ->mapWithKeys(function (SubDivision $subDivision): array {
+                $key = mb_strtolower(trim($subDivision->name), 'UTF-8');
+
+                return [$key => $subDivision];
+            });
 
         try {
             foreach (array_slice($rows, 1) as $index => $row) {
@@ -124,7 +118,7 @@ class UserController extends Controller
                 $rowData['note'] = $rowData['note'] ?? null;
                 $rowData['role'] = $this->normalizeRoleForImport((string) ($rowData['role'] ?? ''));
 
-                $isEmptyRow = collect($rowData)->every(fn($value) => $value === null || $value === '');
+                $isEmptyRow = collect($rowData)->every(fn ($value) => $value === null || $value === '');
                 if ($isEmptyRow) {
                     continue;
                 }
@@ -147,7 +141,8 @@ class UserController extends Controller
 
                 if ($validator->fails()) {
                     $skipped++;
-                    $errors[] = "Baris {$rowNumber}: " . $validator->errors()->first();
+                    $errors[] = "Baris {$rowNumber}: ".$validator->errors()->first();
+
                     continue;
                 }
 
@@ -155,51 +150,60 @@ class UserController extends Controller
                 if (in_array($email, $seenEmails, true)) {
                     $skipped++;
                     $errors[] = "Baris {$rowNumber}: Email duplikat di file import ({$email}).";
+
                     continue;
                 }
                 $seenEmails[] = $email;
 
-                if (User::where('email', $email)->exists()) {
+                if (isset($existingEmails[$email])) {
                     $skipped++;
                     $errors[] = "Baris {$rowNumber}: Email {$email} sudah terdaftar.";
+
                     continue;
                 }
 
-                DB::transaction(function () use ($rowData, $email): void {
-                    $subDivision = SubDivision::firstOrCreate([
-                        'name' => trim((string) $rowData['sub_division']),
-                    ]);
+                $subDivisionName = trim((string) $rowData['sub_division']);
+                $subDivisionKey = mb_strtolower($subDivisionName, 'UTF-8');
 
-                    User::create([
-                        'sub_division_id' => $subDivision->id,
-                        'email' => $email,
-                        'password' => (string) $rowData['password'],
-                        'nip' => (string) $rowData['nip'],
-                        'name' => (string) $rowData['name'],
-                        'rank' => (string) $rowData['rank'],
-                        'job_title' => (string) $rowData['job_title'],
-                        'assignment_regulation_level' => $rowData['assignment_regulation_level'] ?: null,
-                        'role' => (string) $rowData['role'],
-                        'is_active' => $this->toBoolean($rowData['is_active'] ?? null, true),
-                        'note' => $rowData['note'] ?: null,
-                    ]);
-                });
+                $subDivision = $subDivisionCache->get($subDivisionKey);
+                if (! $subDivision) {
+                    $subDivision = SubDivision::create(['name' => $subDivisionName]);
+                    $subDivisionCache->put($subDivisionKey, $subDivision);
+                }
+
+                User::create([
+                    'sub_division_id' => $subDivision->id,
+                    'email' => $email,
+                    'password' => (string) $rowData['password'],
+                    'nip' => (string) $rowData['nip'],
+                    'name' => (string) $rowData['name'],
+                    'rank' => (string) $rowData['rank'],
+                    'job_title' => (string) $rowData['job_title'],
+                    'assignment_regulation_level' => $rowData['assignment_regulation_level'] ?: null,
+                    'role' => (string) $rowData['role'],
+                    'is_active' => $this->toBoolean($rowData['is_active'] ?? null, true),
+                    'note' => $rowData['note'] ?: null,
+                ]);
+                $existingEmails[$email] = true;
 
                 $created++;
             }
         } catch (Throwable $e) {
             report($e);
+
             return back()->with('error', 'Proses import gagal. Periksa isi XLSX lalu coba lagi.');
         }
 
         if ($created === 0) {
             $message = 'Import selesai tanpa data tersimpan.';
             if ($errors !== []) {
-                $message .= ' ' . implode(' | ', array_slice($errors, 0, 5));
+                $message .= ' '.implode(' | ', array_slice($errors, 0, 5));
             }
 
             return back()->with('warning', $message);
         }
+
+        $this->forgetCurrentDashboardCache();
 
         $successMessage = "Import user selesai. Berhasil: {$created}, Dilewati: {$skipped}.";
         $response = redirect()->route('users.index')->with('success', $successMessage);
@@ -211,47 +215,87 @@ class UserController extends Controller
         return $response;
     }
 
-
     public function edit(User $user)
     {
         $subDivisions = SubDivision::all();
+
         return view('users.edit', compact('user', 'subDivisions'));
     }
 
     public function update(Request $request, User $user)
     {
-        $request->validate([
-            'sub_division_id' => 'required|exists:sub_divisions,id',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'password' => 'nullable|min:6',
-            'nip' => 'required|string|max:255',
-            'name' => 'required',
-            'rank' => 'required',
-            'job_title' => 'required',
-            'assignment_regulation_level' => 'nullable|string|max:255',
-            'role' => 'required',
-        ]);
+        $validated = $request->validate($this->userRules($user->id), $this->userMessages());
+        $payload = $this->mapUserPayload($validated, $request->boolean('is_active'));
 
-        $data = $request->except('password');
-
-        if ($request->filled('password')) {
-            $data['password'] = $request->password;
+        if (! $request->filled('password')) {
+            unset($payload['password']);
         }
 
-        $data['is_active'] = $request->has('is_active');
-
-        $user->update($data);
+        $user->update($payload);
+        $this->forgetCurrentDashboardCache();
 
         return redirect()->route('users.index')
             ->with('success', 'User berhasil diperbarui.');
     }
 
-
     public function destroy(User $user)
     {
         $user->delete();
+        $this->forgetCurrentDashboardCache();
+
         return redirect()->route('users.index')
             ->with('success', 'User berhasil dihapus.');
+    }
+
+    private function forgetCurrentDashboardCache(): void
+    {
+        Cache::forget('dashboard:summary:'.now()->format('Y-m'));
+    }
+
+    private function userRules(?int $ignoreUserId = null): array
+    {
+        return [
+            'sub_division_id' => ['required', 'integer', 'exists:sub_divisions,id'],
+            'email' => $ignoreUserId
+                ? ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($ignoreUserId)]
+                : ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => [$ignoreUserId ? 'nullable' : 'required', 'string', 'min:8', 'max:255'],
+            'nip' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
+            'rank' => ['required', 'string', 'max:255'],
+            'job_title' => ['required', 'string', 'max:255'],
+            'assignment_regulation_level' => ['nullable', 'string', 'max:255'],
+            'role' => ['required', Rule::in(['ADMIN', 'STAFF', 'PIMPINAN ADPIM'])],
+            'note' => ['nullable', 'string'],
+        ];
+    }
+
+    private function userMessages(): array
+    {
+        return [
+            'email.unique' => 'Email sudah digunakan oleh user lain.',
+            'password.min' => 'Password minimal 8 karakter.',
+            'role.in' => 'Role wajib salah satu: ADMIN, STAFF, atau PIMPINAN ADPIM.',
+        ];
+    }
+
+    private function mapUserPayload(array $validated, bool $isActive): array
+    {
+        return [
+            'sub_division_id' => (int) $validated['sub_division_id'],
+            'email' => strtolower(trim((string) $validated['email'])),
+            'password' => (string) ($validated['password'] ?? ''),
+            'nip' => trim((string) $validated['nip']),
+            'name' => trim((string) $validated['name']),
+            'rank' => trim((string) $validated['rank']),
+            'job_title' => trim((string) $validated['job_title']),
+            'assignment_regulation_level' => filled($validated['assignment_regulation_level'] ?? null)
+                ? trim((string) $validated['assignment_regulation_level'])
+                : null,
+            'role' => (string) $validated['role'],
+            'is_active' => $isActive,
+            'note' => filled($validated['note'] ?? null) ? trim((string) $validated['note']) : null,
+        ];
     }
 
     private function normalizeImportHeaders(array $headers): array
@@ -318,7 +362,7 @@ class UserController extends Controller
 
     private function readXlsxRows(string $path): array
     {
-        $zip = new \ZipArchive();
+        $zip = new \ZipArchive;
         if ($zip->open($path) !== true) {
             throw new \RuntimeException('XLSX tidak dapat dibuka.');
         }
@@ -362,6 +406,7 @@ class UserController extends Controller
 
             if ($rowValues === []) {
                 $rows[] = [];
+
                 continue;
             }
 
@@ -418,7 +463,7 @@ class UserController extends Controller
                 break;
             }
 
-            return 'xl/' . ltrim(str_replace('\\', '/', $target), '/');
+            return 'xl/'.ltrim(str_replace('\\', '/', $target), '/');
         }
 
         return 'xl/worksheets/sheet1.xml';
@@ -443,6 +488,7 @@ class UserController extends Controller
         foreach ($stringItems as $item) {
             if (isset($item->t)) {
                 $values[] = (string) $item->t;
+
                 continue;
             }
 
@@ -462,6 +508,7 @@ class UserController extends Controller
 
         if ($type === 's') {
             $sharedIndex = (int) ($cellNode->v ?? 0);
+
             return isset($sharedStrings[$sharedIndex]) ? (string) $sharedStrings[$sharedIndex] : '';
         }
 

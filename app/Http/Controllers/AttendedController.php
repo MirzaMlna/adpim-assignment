@@ -10,6 +10,7 @@ class AttendedController extends Controller
     public function index()
     {
         $attendeds = Attended::latest()->paginate(10);
+
         return view('attendeds.index', compact('attendeds'));
     }
 
@@ -20,13 +21,13 @@ class AttendedController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'rank' => 'required|string|max:255',
             'rank_abbreviation' => 'required|string|max:255',
         ]);
 
-        Attended::create($request->all());
+        Attended::create($validated);
 
         return redirect()->route('attendeds.index')
             ->with('success', 'Data pimpinan berhasil ditambahkan.');
@@ -39,13 +40,13 @@ class AttendedController extends Controller
 
     public function update(Request $request, Attended $attended)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'rank' => 'required|string|max:255',
             'rank_abbreviation' => 'required|string|max:255',
         ]);
 
-        $attended->update($request->all());
+        $attended->update($validated);
 
         return redirect()->route('attendeds.index')
             ->with('success', 'Data pimpinan berhasil diperbarui.');

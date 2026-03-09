@@ -10,6 +10,7 @@ class SubDivisionController extends Controller
     public function index()
     {
         $subDivisions = SubDivision::latest()->paginate(10);
+
         return view('sub_divisions.index', compact('subDivisions'));
     }
 
@@ -20,11 +21,11 @@ class SubDivisionController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:sub_divisions,name',
         ]);
 
-        SubDivision::create($request->all());
+        SubDivision::create($validated);
 
         return redirect()->route('sub-divisions.index')
             ->with('success', 'Sub Bidang berhasil ditambahkan.');
@@ -37,11 +38,11 @@ class SubDivisionController extends Controller
 
     public function update(Request $request, SubDivision $subDivision)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:sub_divisions,name,'.$subDivision->id,
         ]);
 
-        $subDivision->update($request->all());
+        $subDivision->update($validated);
 
         return redirect()->route('sub-divisions.index')
             ->with('success', 'Sub Bidang berhasil diperbarui.');

@@ -1,4 +1,5 @@
-import axios from 'axios';
-window.axios = axios;
+const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? null;
 
-window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+if (csrfToken) {
+    window.csrfToken = csrfToken;
+}

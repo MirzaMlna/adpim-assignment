@@ -6,7 +6,9 @@ use App\Models\Assignment;
 use App\Models\Attended;
 use App\Services\SppdDocxExporter;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -14,8 +16,12 @@ class AssignmentController extends Controller
 {
     public function index()
     {
-        $assignments = Assignment::with(['attendeds', 'assignmentUsers'])
-            ->latest()
+        $assignments = Assignment::query()
+            ->with([
+                'attendeds:id,rank_abbreviation',
+                'assignmentUsers:id,assignment_id',
+            ])
+            ->latest('date')
             ->paginate(10);
 
         return view('assignments.index', compact('assignments'));
@@ -23,7 +29,8 @@ class AssignmentController extends Controller
 
     public function create()
     {
-        $attendeds = Attended::all();
+        $attendeds = Attended::query()->orderBy('name')->get(['id', 'name']);
+
         return view('assignments.create', compact('attendeds'));
     }
 
@@ -36,32 +43,38 @@ class AssignmentController extends Controller
             $assignment = null;
             $attendedIds = collect($validated['attended_ids'])->unique()->values()->all();
 
-            DB::transaction(function () use (&$assignment, $validated, $attendedIds, $resolvedReturnDate) {
-                $assignment = Assignment::create([
-                    'code' => $this->generateAssignmentCode($validated['date']),
-                    'title' => $validated['title'],
-                    'agency' => $validated['agency'],
-                    'date' => $validated['date'],
-                    'boarding_date' => $validated['boarding_date'],
-                    'return_date' => $resolvedReturnDate,
-                    'transportation' => $validated['transportation'],
-                    'time' => $validated['time'],
-                    'day_count' => $validated['day_count'],
-                    'location' => $validated['location'],
-                    'location_detail' => $validated['location_detail'] ?? null,
-                    'fee_per_day' => $validated['fee_per_day'],
-                    'description' => $validated['description'] ?? null,
-                    'region_classification' => $validated['region_classification'],
-                ]);
+            $payload = $this->buildAssignmentPayload($validated, $resolvedReturnDate);
+            $attempt = 0;
+            $maxAttempt = 3;
 
-                $assignment->attendeds()->attach($attendedIds);
-            });
+            do {
+                try {
+                    DB::transaction(function () use (&$assignment, $payload, $attendedIds) {
+                        $assignment = Assignment::create([
+                            ...$payload,
+                            'code' => $this->generateAssignmentCode($payload['date']),
+                        ]);
+
+                        $assignment->attendeds()->attach($attendedIds);
+                    });
+
+                    break;
+                } catch (QueryException $queryException) {
+                    $attempt++;
+                    if (! $this->isAssignmentCodeCollision($queryException) || $attempt >= $maxAttempt) {
+                        throw $queryException;
+                    }
+                }
+            } while ($attempt < $maxAttempt);
         } catch (Throwable $e) {
             report($e);
+
             return back()
                 ->withInput()
                 ->with('error', 'Data tugas gagal disimpan. Silakan coba lagi.');
         }
+
+        $this->forgetDashboardCacheForMonth($validated['date']);
 
         return redirect()->route('assignments.index')
             ->with('success', 'Data tugas berhasil ditambahkan');
@@ -69,24 +82,28 @@ class AssignmentController extends Controller
 
     public function edit(Assignment $assignment)
     {
-        $attendeds = Attended::all();
+        $assignment->loadMissing('attendeds:id');
+        $attendeds = Attended::query()->orderBy('name')->get(['id', 'name']);
+
         return view('assignments.edit', compact('assignment', 'attendeds'));
     }
 
     public function update(Request $request, Assignment $assignment)
     {
+        $originalDate = optional($assignment->date)->format('Y-m-d');
         $validated = $request->validate($this->rules(), $this->messages());
         $resolvedReturnDate = $this->resolveReturnDate($validated['boarding_date'], (int) $validated['day_count']);
+        $payload = $this->buildAssignmentPayload($validated, $resolvedReturnDate);
 
         $attendedIds = collect($validated['attended_ids'])->unique()->values()->all();
         $currentAttendedIds = $assignment->attendeds()
             ->pluck('attendeds.id')
-            ->map(fn($id) => (int) $id)
+            ->map(fn ($id) => (int) $id)
             ->sort()
             ->values()
             ->all();
         $incomingAttendedIds = collect($attendedIds)
-            ->map(fn($id) => (int) $id)
+            ->map(fn ($id) => (int) $id)
             ->sort()
             ->values()
             ->all();
@@ -111,31 +128,21 @@ class AssignmentController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($assignment, $validated, $attendedIds, $resolvedReturnDate) {
-                $assignment->update([
-                    'title' => $validated['title'],
-                    'agency' => $validated['agency'],
-                    'date' => $validated['date'],
-                    'boarding_date' => $validated['boarding_date'],
-                    'return_date' => $resolvedReturnDate,
-                    'transportation' => $validated['transportation'],
-                    'time' => $validated['time'],
-                    'day_count' => $validated['day_count'],
-                    'location' => $validated['location'],
-                    'location_detail' => $validated['location_detail'] ?? null,
-                    'fee_per_day' => $validated['fee_per_day'],
-                    'description' => $validated['description'] ?? null,
-                    'region_classification' => $validated['region_classification'],
-                ]);
+            DB::transaction(function () use ($assignment, $payload, $attendedIds) {
+                $assignment->update($payload);
 
                 $assignment->attendeds()->sync($attendedIds);
             });
         } catch (Throwable $e) {
             report($e);
+
             return back()
                 ->withInput()
                 ->with('error', 'Perubahan data tugas gagal disimpan. Silakan coba lagi.');
         }
+
+        $this->forgetDashboardCacheForMonth($originalDate ?: $validated['date']);
+        $this->forgetDashboardCacheForMonth($validated['date']);
 
         return redirect()->route('assignments.index')
             ->with('success', 'Data tugas berhasil diperbarui');
@@ -143,14 +150,20 @@ class AssignmentController extends Controller
 
     public function show(Assignment $assignment)
     {
-        $assignment->load(['attendeds', 'assignmentUsers.user']);
+        $assignment->load([
+            'attendeds:id,name,rank_abbreviation',
+            'assignmentUsers.user:id,name',
+        ]);
 
         return view('assignments.show', compact('assignment'));
     }
 
     public function printSppd(Assignment $assignment, SppdDocxExporter $exporter)
     {
-        $assignment->load(['assignmentUsers.user', 'attendeds']);
+        $assignment->load([
+            'assignmentUsers.user:id,name,nip,rank,job_title,assignment_regulation_level',
+            'attendeds:id,name,rank,rank_abbreviation',
+        ]);
 
         if ($assignment->assignmentUsers->isEmpty()) {
             return back()->with('warning', 'Petugas belum ditugaskan. Tugaskan petugas terlebih dahulu sebelum cetak SPT/SPPD.');
@@ -165,7 +178,7 @@ class AssignmentController extends Controller
         }
 
         $downloadPrefix = $assignment->region_classification === 'dalam_daerah' ? 'SPT' : 'SPPD';
-        $downloadName = $downloadPrefix . '-' . $assignment->code . '.docx';
+        $downloadName = $downloadPrefix.'-'.$assignment->code.'.docx';
 
         return response()->download($outputPath, $downloadName)->deleteFileAfterSend(true);
     }
@@ -177,9 +190,12 @@ class AssignmentController extends Controller
             $assignment->delete();
         } catch (Throwable $e) {
             report($e);
+
             return redirect()->route('assignments.index')
                 ->with('error', 'Data tugas gagal dihapus. Silakan coba lagi.');
         }
+
+        $this->forgetDashboardCacheForMonth($assignment->date?->format('Y-m-d'));
 
         return redirect()->route('assignments.index')
             ->with(
@@ -193,16 +209,57 @@ class AssignmentController extends Controller
     private function generateAssignmentCode(string $date): string
     {
         $datePart = date('dmY', strtotime($date));
-        $sequence = Assignment::whereDate('date', $date)->count() + 1;
+        $prefix = "GIAT-{$datePart}-";
 
-        do {
-            $increment = str_pad((string) $sequence, 3, '0', STR_PAD_LEFT);
-            $code = "GIAT-{$datePart}-{$increment}";
-            $isUsed = Assignment::where('code', $code)->exists();
-            $sequence++;
-        } while ($isUsed);
+        $lastCode = Assignment::query()
+            ->where('code', 'like', $prefix.'%')
+            ->orderByDesc('code')
+            ->value('code');
 
-        return $code;
+        $nextSequence = 1;
+        if (is_string($lastCode) && preg_match('/(\d{3})$/', $lastCode, $matches) === 1) {
+            $nextSequence = ((int) $matches[1]) + 1;
+        }
+
+        return $prefix.str_pad((string) $nextSequence, 3, '0', STR_PAD_LEFT);
+    }
+
+    private function buildAssignmentPayload(array $validated, string $resolvedReturnDate): array
+    {
+        return [
+            'title' => $validated['title'],
+            'agency' => $validated['agency'],
+            'date' => $validated['date'],
+            'boarding_date' => $validated['boarding_date'],
+            'return_date' => $resolvedReturnDate,
+            'transportation' => $validated['transportation'],
+            'time' => $validated['time'],
+            'day_count' => $validated['day_count'],
+            'location' => $validated['location'],
+            'location_detail' => $validated['location_detail'] ?? null,
+            'fee_per_day' => $validated['fee_per_day'],
+            'description' => $validated['description'] ?? null,
+            'region_classification' => $validated['region_classification'],
+        ];
+    }
+
+    private function isAssignmentCodeCollision(QueryException $queryException): bool
+    {
+        $sqlState = $queryException->errorInfo[0] ?? null;
+        $message = $queryException->getMessage();
+
+        return $sqlState === '23000'
+            && str_contains(strtolower((string) $message), 'assignments_code_unique');
+    }
+
+    private function forgetDashboardCacheForMonth(?string $date): void
+    {
+        if (! $date) {
+            return;
+        }
+
+        $monthKey = Carbon::parse($date)->format('Y-m');
+        Cache::forget('dashboard:summary:'.$monthKey);
     }
 
     private function rules(): array

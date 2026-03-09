@@ -6,6 +6,7 @@ use App\Models\Assignment;
 use App\Models\AssignmentUser;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -15,6 +16,12 @@ class DashboardController extends Controller
         $monthStart = now()->startOfMonth();
         $monthEnd = now()->endOfMonth();
         $regionLabels = $this->regionLabels();
+        $cacheKey = 'dashboard:summary:'.$monthStart->format('Y-m');
+
+        $cachedData = Cache::get($cacheKey);
+        if (is_array($cachedData)) {
+            return view('dashboard', $cachedData);
+        }
 
         $staffBaseQuery = User::query()->where('role', 'STAFF');
         $totalStaff = (clone $staffBaseQuery)->count();
@@ -45,6 +52,7 @@ class DashboardController extends Controller
 
             if ($rows->isEmpty()) {
                 $topStaffByRegion[$regionKey] = collect();
+
                 continue;
             }
 
@@ -154,7 +162,7 @@ class DashboardController extends Controller
             ])
             ->values();
 
-        return view('dashboard', [
+        $viewData = [
             'periodLabel' => $monthStart->translatedFormat('F Y'),
             'totalStaff' => $totalStaff,
             'activeStaff' => $activeStaff,
@@ -167,7 +175,11 @@ class DashboardController extends Controller
             'monthlyAssignmentUserCount' => $assignmentUserCount,
             'yearNow' => $yearNow,
             'monthlyBudgetTable' => $monthlyBudgetTable,
-        ]);
+        ];
+
+        Cache::put($cacheKey, $viewData, now()->addMinutes(5));
+
+        return view('dashboard', $viewData);
     }
 
     private function regionLabels(): array
@@ -179,4 +191,3 @@ class DashboardController extends Controller
         ];
     }
 }
-

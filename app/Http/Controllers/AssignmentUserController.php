@@ -6,6 +6,7 @@ use App\Models\Assignment;
 use App\Models\AssignmentUser;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -13,8 +14,12 @@ class AssignmentUserController extends Controller
 {
     public function index()
     {
-        $assignments = Assignment::with(['assignmentUsers.user', 'attendeds'])
-            ->latest()
+        $assignments = Assignment::query()
+            ->with([
+                'assignmentUsers.user:id,name',
+                'attendeds:id,rank_abbreviation',
+            ])
+            ->latest('date')
             ->paginate(10);
 
         return view('assignment-users.index', compact('assignments'));
@@ -22,11 +27,12 @@ class AssignmentUserController extends Controller
 
     public function create(Request $request)
     {
-        $users = User::orderBy('name')->get();
+        $users = User::query()->orderBy('name')->get(['id', 'name']);
         $lockedAssignment = null;
 
         if ($request->filled('assignment_id')) {
-            $lockedAssignment = Assignment::with('assignmentUsers')
+            $lockedAssignment = Assignment::query()
+                ->with('assignmentUsers:id,assignment_id')
                 ->find($request->integer('assignment_id'));
 
             if (! $lockedAssignment) {
@@ -42,10 +48,10 @@ class AssignmentUserController extends Controller
         }
 
         $assignments = $lockedAssignment
-            ? Assignment::whereKey($lockedAssignment->id)->get()
+            ? Assignment::query()->whereKey($lockedAssignment->id)->get(['id', 'code', 'title'])
             : Assignment::whereDoesntHave('assignmentUsers')
                 ->latest('date')
-                ->get();
+                ->get(['id', 'code', 'title', 'date']);
 
         if ($users->isEmpty()) {
             session()->now('warning', 'Data petugas belum tersedia. Tambahkan data petugas terlebih dahulu.');
@@ -68,7 +74,7 @@ class AssignmentUserController extends Controller
         );
 
         $userIds = collect($validated['user_id'])
-            ->map(fn($id) => (int) $id)
+            ->map(fn ($id) => (int) $id)
             ->unique()
             ->values();
 
@@ -85,7 +91,7 @@ class AssignmentUserController extends Controller
         try {
             DB::transaction(function () use ($validated, $userIds) {
                 $now = now();
-                $rows = $userIds->map(fn($userId) => [
+                $rows = $userIds->map(fn ($userId) => [
                     'user_id' => $userId,
                     'assignment_id' => $validated['assignment_id'],
                     'created_at' => $now,
@@ -96,10 +102,13 @@ class AssignmentUserController extends Controller
             });
         } catch (Throwable $e) {
             report($e);
+
             return back()
                 ->withInput()
                 ->with('error', 'Data penugasan gagal disimpan. Silakan coba lagi.');
         }
+
+        $this->forgetDashboardCacheForAssignment((int) $validated['assignment_id']);
 
         return redirect()->route('assignments.index')
             ->with('success', 'Petugas untuk giat berhasil disimpan.');
@@ -114,12 +123,12 @@ class AssignmentUserController extends Controller
 
     public function edit(AssignmentUser $assignment_user)
     {
-        $users = User::orderBy('name')->get();
+        $users = User::query()->orderBy('name')->get(['id', 'name']);
         $selectedAssignmentId = (int) $assignment_user->assignment_id;
-        $lockedAssignment = Assignment::find($selectedAssignmentId);
+        $lockedAssignment = Assignment::query()->find($selectedAssignmentId, ['id', 'code', 'title']);
         $assignedUserIds = AssignmentUser::where('assignment_id', $selectedAssignmentId)
             ->pluck('user_id')
-            ->map(fn($id) => (int) $id)
+            ->map(fn ($id) => (int) $id)
             ->values()
             ->all();
 
@@ -142,13 +151,13 @@ class AssignmentUserController extends Controller
         );
 
         $newUserIds = collect($validated['user_id'])
-            ->map(fn($id) => (int) $id)
+            ->map(fn ($id) => (int) $id)
             ->unique()
             ->sort()
             ->values();
         $currentUserIds = AssignmentUser::where('assignment_id', $originalAssignmentId)
             ->pluck('user_id')
-            ->map(fn($id) => (int) $id)
+            ->map(fn ($id) => (int) $id)
             ->sort()
             ->values();
 
@@ -161,7 +170,7 @@ class AssignmentUserController extends Controller
                 AssignmentUser::where('assignment_id', $originalAssignmentId)->delete();
 
                 $now = now();
-                $rows = $newUserIds->map(fn($userId) => [
+                $rows = $newUserIds->map(fn ($userId) => [
                     'user_id' => $userId,
                     'assignment_id' => $originalAssignmentId,
                     'created_at' => $now,
@@ -172,10 +181,13 @@ class AssignmentUserController extends Controller
             });
         } catch (Throwable $e) {
             report($e);
+
             return back()
                 ->withInput()
                 ->with('error', 'Data penugasan gagal diperbarui. Silakan coba lagi.');
         }
+
+        $this->forgetDashboardCacheForAssignment($originalAssignmentId);
 
         return redirect()->route('assignments.index')
             ->with('success', 'Petugas untuk giat berhasil diperbarui.');
@@ -187,12 +199,15 @@ class AssignmentUserController extends Controller
             $deletedRows = AssignmentUser::where('assignment_id', $assignment_user->assignment_id)->delete();
         } catch (Throwable $e) {
             report($e);
+
             return back()->with('error', 'Data penugasan gagal dihapus. Silakan coba lagi.');
         }
 
         if ($deletedRows === 0) {
             return back()->with('warning', 'Tidak ada data penugasan yang dihapus.');
         }
+
+        $this->forgetDashboardCacheForAssignment((int) $assignment_user->assignment_id);
 
         return redirect()->route('assignments.index')
             ->with('success', "Data penugasan berhasil dihapus ({$deletedRows} petugas).");
@@ -219,5 +234,19 @@ class AssignmentUserController extends Controller
             'user_id.max' => 'Maksimal 5 petugas.',
             'user_id.*.distinct' => 'Petugas tidak boleh duplikat.',
         ];
+    }
+
+    private function forgetDashboardCacheForAssignment(int $assignmentId): void
+    {
+        $assignmentDate = Assignment::query()
+            ->whereKey($assignmentId)
+            ->value('date');
+
+        if (! $assignmentDate) {
+            return;
+        }
+
+        $monthKey = date('Y-m', strtotime((string) $assignmentDate));
+        Cache::forget('dashboard:summary:'.$monthKey);
     }
 }

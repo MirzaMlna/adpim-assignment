@@ -1,221 +1,148 @@
-<nav x-data="{ open: false }" class="bg-white border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-
-            <!-- Left Section -->
-            <div class="flex items-center gap-8">
-
-                <!-- Logo -->
-                <a href="{{ route('dashboard') }}" class="flex items-center">
-                    <x-application-logo class="block h-8 w-auto fill-current text-blue-900" />
+<nav x-data="{ mobileOpen: false, dataOpen: false, taskOpen: false, profileOpen: false }" class="app-nav">
+    <div class="content-shell">
+        <div class="flex h-16 items-center justify-between gap-4">
+            <div class="flex items-center gap-4 sm:gap-6">
+                <a href="{{ route('dashboard') }}" class="flex items-center gap-2" aria-label="Dashboard">
+                    <x-application-logo class="h-8 w-8 fill-current text-cyan-700" />
+                    <span class="hidden text-sm font-bold tracking-wide text-slate-800 sm:block">ADPIM</span>
                 </a>
 
-                <!-- Desktop Menu -->
-                <div class="hidden sm:flex items-center gap-6 text-sm font-medium">
-
+                <div class="hidden items-center gap-1 sm:flex">
                     <a href="{{ route('dashboard') }}"
-                        class="flex items-center gap-2 border-b-2 pb-1 transition
-                        {{ request()->routeIs('dashboard')
-                            ? 'border-blue-900 text-blue-900'
-                            : 'border-transparent text-gray-600 hover:text-blue-900 hover:border-blue-900' }}">
-                        <i class="bi bi-speedometer2"></i>
+                        class="app-nav-link {{ request()->routeIs('dashboard') ? 'app-nav-link-active' : '' }}">
+                        <i class="bi bi-grid-1x2"></i>
                         Dashboard
                     </a>
 
-                    <div class="relative" x-data="{ dropdown: false }">
-                        <button @click="dropdown = !dropdown"
-                            class="flex items-center gap-2 border-b-2 pb-1 transition
-                            {{ request()->routeIs('sub-divisions.*') || request()->routeIs('attendeds.*')
-                                ? 'border-blue-900 text-blue-900'
-                                : 'border-transparent text-gray-600 hover:text-blue-900 hover:border-blue-900' }}">
-                            <i class="bi bi-gear"></i>
-                            Data
+                    <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                        <button type="button" class="app-nav-link"
+                            :class="{ 'app-nav-link-active': {{ request()->routeIs('sub-divisions.*') || request()->routeIs('attendeds.*') || request()->routeIs('users.*') ? 'true' : 'false' }} }"
+                            @click="open = !open" :aria-expanded="open.toString()" aria-haspopup="menu">
+                            <i class="bi bi-folder2-open"></i>
+                            Data Master
                             <i class="bi bi-chevron-down text-xs"></i>
                         </button>
-
-                        <div x-show="dropdown" @click.away="dropdown = false"
-                            class="absolute mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-100 z-50">
-
-                            <a href="{{ route('sub-divisions.index') }}"
-                                class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900">
+                        <div x-cloak x-show="open" x-transition @click.outside="open = false"
+                            class="absolute left-0 z-50 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
+                            <a href="{{ route('sub-divisions.index') }}" class="app-nav-link w-full">
                                 <i class="bi bi-diagram-3"></i>
                                 Sub Bidang
                             </a>
-
-                            <a href="{{ route('attendeds.index') }}"
-                                class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900">
+                            <a href="{{ route('attendeds.index') }}" class="app-nav-link w-full">
                                 <i class="bi bi-person-badge"></i>
-                                Kehadiran Pimpinan
+                                Pimpinan
                             </a>
-                            <a href="{{ route('users.index') }}"
-                                class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900">
+                            <a href="{{ route('users.index') }}" class="app-nav-link w-full">
                                 <i class="bi bi-people"></i>
                                 Staff
                             </a>
                         </div>
                     </div>
 
-                    <div class="relative" x-data="{ dropdownPenugasan: false }">
-                        <button @click="dropdownPenugasan = !dropdownPenugasan"
-                            class="flex items-center gap-2 border-b-2 pb-1 transition
-        {{ request()->routeIs('assignments.*')
-            ? 'border-blue-900 text-blue-900'
-            : 'border-transparent text-gray-600 hover:text-blue-900 hover:border-blue-900' }}">
-                            <i class="bi bi-clipboard-check"></i>
+                    <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                        <button type="button" class="app-nav-link"
+                            :class="{ 'app-nav-link-active': {{ request()->routeIs('assignments.*') || request()->routeIs('assignment-users.*') ? 'true' : 'false' }} }"
+                            @click="open = !open" :aria-expanded="open.toString()" aria-haspopup="menu">
+                            <i class="bi bi-clipboard2-check"></i>
                             Giat
                             <i class="bi bi-chevron-down text-xs"></i>
                         </button>
-
-                        <div x-show="dropdownPenugasan" @click.away="dropdownPenugasan = false"
-                            class="absolute mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-100 z-50">
-
-                            <a href="{{ route('assignments.index') }}"
-                                class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900">
+                        <div x-cloak x-show="open" x-transition @click.outside="open = false"
+                            class="absolute left-0 z-50 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
+                            <a href="{{ route('assignments.index') }}" class="app-nav-link w-full">
                                 <i class="bi bi-list-task"></i>
-                                Daftar Giat
+                                Data Giat
                             </a>
-                            <a href="{{ route('assignment-users.index') }}"
-                                class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900">
+                            <a href="{{ route('assignment-users.index') }}" class="app-nav-link w-full">
                                 <i class="bi bi-person-check"></i>
                                 Penugasan Giat
                             </a>
-
                         </div>
                     </div>
-
-
                 </div>
             </div>
 
-            <!-- Right Section -->
-            <div class="hidden sm:flex items-center">
-                <div class="relative" x-data="{ dropdown: false }">
-                    <button @click="dropdown = !dropdown"
-                        class="flex items-center gap-2 text-sm text-gray-600 hover:text-blue-900 transition">
-                        {{ Auth::user()->name }}
+            <div class="hidden items-center sm:flex">
+                <div class="relative" @keydown.escape.window="profileOpen = false">
+                    <button type="button" class="app-nav-link" @click="profileOpen = !profileOpen"
+                        :aria-expanded="profileOpen.toString()" aria-haspopup="menu">
+                        <i class="bi bi-person-circle"></i>
+                        <span class="max-w-[180px] truncate">{{ Auth::user()->name }}</span>
                         <i class="bi bi-chevron-down text-xs"></i>
                     </button>
-
-                    <div x-show="dropdown" @click.away="dropdown = false"
-                        class="absolute right-0 mt-2 w-44 bg-white rounded-md shadow-lg border border-gray-100">
-
-                        <a href="{{ route('profile.edit') }}"
-                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">
-                            Profile
+                    <div x-cloak x-show="profileOpen" x-transition @click.outside="profileOpen = false"
+                        class="absolute right-0 z-50 mt-2 w-52 rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
+                        <a href="{{ route('profile.edit') }}" class="app-nav-link w-full">
+                            <i class="bi bi-gear"></i>
+                            Profil
                         </a>
-
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit"
-                                class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                                Log Out
+                            <button type="submit" class="app-nav-link w-full text-rose-700 hover:bg-rose-50">
+                                <i class="bi bi-box-arrow-right"></i>
+                                Logout
                             </button>
                         </form>
                     </div>
                 </div>
             </div>
 
-            <!-- Mobile Button -->
-            <div class="flex items-center sm:hidden">
-                <button @click="open = !open" class="p-2 rounded-md text-gray-600 hover:bg-gray-100 transition">
-                    <i class="bi" :class="open ? 'bi-x-lg' : 'bi-list'"></i>
-                </button>
-            </div>
-
+            <button type="button" class="btn btn-secondary px-3 py-2 sm:hidden" @click="mobileOpen = !mobileOpen"
+                :aria-expanded="mobileOpen.toString()" aria-label="Buka menu navigasi">
+                <i class="bi" :class="mobileOpen ? 'bi-x-lg' : 'bi-list'"></i>
+            </button>
         </div>
     </div>
 
-    <!-- Mobile Menu -->
-    <!-- Mobile Menu -->
-    <div x-show="open" class="sm:hidden border-t border-gray-200 bg-white">
+    <div x-cloak x-show="mobileOpen" x-transition class="border-t border-slate-200 bg-white sm:hidden">
+        <div class="content-shell py-3">
+            <div class="space-y-1">
+                <a href="{{ route('dashboard') }}" class="app-nav-link w-full">
+                    <i class="bi bi-grid-1x2"></i>
+                    Dashboard
+                </a>
 
-        <div class="px-4 py-3 space-y-2 text-sm">
-
-            <!-- Dashboard -->
-            <a href="{{ route('dashboard') }}" class="flex items-center gap-2 py-2 text-gray-700 hover:text-blue-900">
-                <i class="bi bi-speedometer2"></i>
-                Dashboard
-            </a>
-
-            <!-- Data Dropdown -->
-            <div x-data="{ dataOpen: false }" class="border-t pt-3">
-
-                <button @click="dataOpen = !dataOpen"
-                    class="flex items-center justify-between w-full py-2 text-gray-700 hover:text-blue-900">
-                    <span class="flex items-center gap-2">
-                        <i class="bi bi-gear"></i>
-                        Data
+                <button type="button" class="app-nav-link w-full justify-between" @click="dataOpen = !dataOpen"
+                    :aria-expanded="dataOpen.toString()">
+                    <span class="inline-flex items-center gap-2">
+                        <i class="bi bi-folder2-open"></i> Data Master
                     </span>
                     <i class="bi" :class="dataOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
                 </button>
-
-                <div x-show="dataOpen" class="pl-6 mt-2 space-y-2">
-
-                    <a href="{{ route('sub-divisions.index') }}"
-                        class="flex items-center gap-2 py-1 text-gray-700 hover:text-blue-900">
-                        <i class="bi bi-diagram-3"></i>
-                        Sub Bidang
-                    </a>
-
-                    <a href="{{ route('attendeds.index') }}"
-                        class="flex items-center gap-2 py-1 text-gray-700 hover:text-blue-900">
-                        <i class="bi bi-person-badge"></i>
-                        Kehadiran Pimpinan
-                    </a>
-
-                    <a href="{{ route('users.index') }}"
-                        class="flex items-center gap-2 py-1 text-gray-700 hover:text-blue-900">
-                        <i class="bi bi-people"></i>
-                        Staff
-                    </a>
-
+                <div x-cloak x-show="dataOpen" class="space-y-1 pl-4">
+                    <a href="{{ route('sub-divisions.index') }}" class="app-nav-link w-full">Sub Bidang</a>
+                    <a href="{{ route('attendeds.index') }}" class="app-nav-link w-full">Pimpinan</a>
+                    <a href="{{ route('users.index') }}" class="app-nav-link w-full">Staff</a>
                 </div>
-            </div>
 
-            <!-- Penugasan Dropdown -->
-            <div x-data="{ tugasOpen: false }" class="border-t pt-3">
-
-                <button @click="tugasOpen = !tugasOpen"
-                    class="flex items-center justify-between w-full py-2 text-gray-700 hover:text-blue-900">
-                    <span class="flex items-center gap-2">
-                        <i class="bi bi-clipboard-check"></i>
-                        Giat
+                <button type="button" class="app-nav-link w-full justify-between" @click="taskOpen = !taskOpen"
+                    :aria-expanded="taskOpen.toString()">
+                    <span class="inline-flex items-center gap-2">
+                        <i class="bi bi-clipboard2-check"></i> Giat
                     </span>
-                    <i class="bi" :class="tugasOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                    <i class="bi" :class="taskOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
                 </button>
-
-                <div x-show="tugasOpen" class="pl-6 mt-2 space-y-2">
-
-                    <a href="{{ route('assignments.index') }}"
-                        class="flex items-center gap-2 py-1 text-gray-700 hover:text-blue-900">
-                        <i class="bi bi-list-task"></i>
-                        Daftar Giat
-                    </a>
-                    <a href="{{ route('assignment-users.index') }}"
-                        class="flex items-center gap-2 py-1 text-gray-700 hover:text-blue-900">
-                        <i class="bi bi-person-check"></i>
-                        Penugasan Giat
-                    </a>
+                <div x-cloak x-show="taskOpen" class="space-y-1 pl-4">
+                    <a href="{{ route('assignments.index') }}" class="app-nav-link w-full">Data Giat</a>
+                    <a href="{{ route('assignment-users.index') }}" class="app-nav-link w-full">Penugasan Giat</a>
                 </div>
             </div>
 
-            <!-- Profile Section -->
-            <div class="border-t pt-4 mt-4">
-                <div class="text-gray-800 font-medium">{{ Auth::user()->name }}</div>
-                <div class="text-gray-500 text-xs">{{ Auth::user()->email }}</div>
-
-                <a href="{{ route('profile.edit') }}" class="block mt-3 text-gray-700 hover:text-blue-900">
-                    Profile
+            <div class="mt-4 space-y-1 border-t border-slate-200 pt-3">
+                <div class="px-3 text-sm font-semibold text-slate-700">{{ Auth::user()->name }}</div>
+                <div class="px-3 text-xs text-slate-500">{{ Auth::user()->email }}</div>
+                <a href="{{ route('profile.edit') }}" class="app-nav-link w-full">
+                    <i class="bi bi-gear"></i>
+                    Profil
                 </a>
-
-                <form method="POST" action="{{ route('logout') }}" class="mt-2">
+                <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="text-red-600">
-                        Log Out
+                    <button type="submit" class="app-nav-link w-full text-rose-700 hover:bg-rose-50">
+                        <i class="bi bi-box-arrow-right"></i>
+                        Logout
                     </button>
                 </form>
             </div>
-
         </div>
     </div>
 </nav>

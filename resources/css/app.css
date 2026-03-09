@@ -1,3 +1,193 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    :root {
+        --surface: 255 255 255;
+        --surface-muted: 247 250 252;
+        --ink: 17 24 39;
+        --ink-soft: 75 85 99;
+        --line: 226 232 240;
+        --brand: 14 116 144;
+        --brand-strong: 15 78 99;
+        --success: 5 150 105;
+        --danger: 220 38 38;
+        --warning: 217 119 6;
+        --info: 2 132 199;
+    }
+
+    * {
+        @apply antialiased;
+    }
+
+    body {
+        @apply min-h-screen text-slate-800;
+        background:
+            radial-gradient(circle at 0% -20%, rgba(20, 184, 166, 0.15), transparent 55%),
+            radial-gradient(circle at 100% -10%, rgba(14, 116, 144, 0.12), transparent 45%),
+            linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+
+    a {
+        @apply transition-colors duration-200;
+    }
+
+    input[type='text'],
+    input[type='email'],
+    input[type='password'],
+    input[type='number'],
+    input[type='date'],
+    input[type='time'],
+    input[type='file'],
+    select,
+    textarea {
+        @apply w-full rounded-xl border-slate-200 bg-white/90 shadow-sm focus:border-cyan-600 focus:ring-cyan-600;
+    }
+
+    input[type='checkbox'] {
+        @apply rounded border-slate-300 text-cyan-700 focus:ring-cyan-600;
+    }
+}
+
+@layer components {
+    .content-shell {
+        @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+    }
+
+    .page-section {
+        @apply py-8 sm:py-10;
+    }
+
+    .panel {
+        @apply rounded-2xl border border-slate-200 bg-white/95 shadow-sm backdrop-blur;
+    }
+
+    .panel-soft {
+        @apply rounded-2xl border border-slate-200/80 bg-slate-50/80 shadow-sm;
+    }
+
+    .form-grid {
+        @apply grid grid-cols-1 gap-5 md:grid-cols-2;
+    }
+
+    .field-label {
+        @apply mb-2 block text-sm font-semibold text-slate-700;
+    }
+
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60;
+    }
+
+    .btn-primary {
+        @apply bg-cyan-700 text-white shadow-sm hover:bg-cyan-800 focus-visible:ring-cyan-700;
+    }
+
+    .btn-secondary {
+        @apply border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 focus-visible:ring-slate-400;
+    }
+
+    .btn-success {
+        @apply bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 focus-visible:ring-emerald-600;
+    }
+
+    .btn-info {
+        @apply bg-sky-600 text-white shadow-sm hover:bg-sky-700 focus-visible:ring-sky-600;
+    }
+
+    .btn-warning {
+        @apply bg-amber-500 text-white shadow-sm hover:bg-amber-600 focus-visible:ring-amber-500;
+    }
+
+    .btn-danger {
+        @apply bg-rose-600 text-white shadow-sm hover:bg-rose-700 focus-visible:ring-rose-600;
+    }
+
+    .btn-dark {
+        @apply bg-slate-800 text-white shadow-sm hover:bg-slate-900 focus-visible:ring-slate-700;
+    }
+
+    .badge {
+        @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold;
+    }
+
+    .badge-neutral {
+        @apply bg-slate-100 text-slate-700;
+    }
+
+    .badge-success {
+        @apply bg-emerald-100 text-emerald-700;
+    }
+
+    .badge-danger {
+        @apply bg-rose-100 text-rose-700;
+    }
+
+    .badge-info {
+        @apply bg-sky-100 text-sky-700;
+    }
+
+    .badge-warning {
+        @apply bg-amber-100 text-amber-700;
+    }
+
+    .table-shell {
+        @apply overflow-x-auto rounded-2xl border border-slate-200 bg-white;
+    }
+
+    .table-ui {
+        @apply min-w-full text-sm;
+    }
+
+    .table-ui thead {
+        @apply bg-slate-900 text-white;
+    }
+
+    .table-ui th {
+        @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide;
+    }
+
+    .table-ui td {
+        @apply px-4 py-3 align-top text-slate-700;
+    }
+
+    .table-ui tbody tr {
+        @apply border-t border-slate-100 transition-colors hover:bg-slate-50;
+    }
+
+    .app-nav {
+        @apply sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur;
+    }
+
+    .app-nav-link {
+        @apply inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900;
+    }
+
+    .app-nav-link-active {
+        @apply bg-cyan-50 text-cyan-700 ring-1 ring-cyan-100;
+    }
+
+    .flash {
+        @apply mb-4 flex items-start gap-3 rounded-xl border px-4 py-3 text-sm;
+    }
+
+    .flash-success {
+        @apply border-emerald-200 bg-emerald-50 text-emerald-800;
+    }
+
+    .flash-error {
+        @apply border-rose-200 bg-rose-50 text-rose-800;
+    }
+
+    .flash-warning {
+        @apply border-amber-200 bg-amber-50 text-amber-800;
+    }
+
+    .flash-info {
+        @apply border-sky-200 bg-sky-50 text-sky-800;
+    }
+}

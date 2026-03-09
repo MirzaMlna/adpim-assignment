@@ -1,32 +1,32 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Tambah Sub Bagian
-        </h2>
+        <div>
+            <h2 class="text-2xl font-bold text-slate-900">Tambah Sub Bagian</h2>
+            <p class="text-sm text-slate-500">Tambahkan data sub bagian baru.</p>
+        </div>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white shadow-sm sm:rounded-lg p-6">
+    <div class="page-section">
+        <div class="content-shell max-w-3xl">
+            <x-flash-alerts />
 
-                <form action="{{ route('sub-divisions.store') }}" method="POST">
+            <div class="panel p-6 sm:p-8">
+                <form action="{{ route('sub-divisions.store') }}" method="POST" class="space-y-6">
                     @csrf
 
-                    <div class="mb-4">
-                        <label class="block mb-2">Nama Sub Bagian</label>
-                        <input type="text" name="name" class="w-full border rounded px-3 py-2"
-                            value="{{ old('name') }}" required>
-
+                    <div>
+                        <label class="field-label">Nama Sub Bagian</label>
+                        <input type="text" name="name" value="{{ old('name') }}" required>
                         @error('name')
-                            <div class="text-red-600 text-sm mt-1">{{ $message }}</div>
+                            <div class="mt-1 text-sm text-rose-600">{{ $message }}</div>
                         @enderror
                     </div>
 
-                    <button class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded">
-                        Simpan
-                    </button>
+                    <div class="flex justify-end gap-3">
+                        <a href="{{ route('sub-divisions.index') }}" class="btn btn-secondary">Batal</a>
+                        <button type="submit" class="btn btn-primary" data-loading-text="Menyimpan...">Simpan</button>
+                    </div>
                 </form>
-
             </div>
         </div>
     </div>
