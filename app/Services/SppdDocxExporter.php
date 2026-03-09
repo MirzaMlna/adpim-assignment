@@ -701,7 +701,7 @@ class SppdDocxExporter
             : $assignment->attendeds()->get();
 
         $ranks = $attendeds
-            ->pluck('rank_abbreviation')
+            ->pluck('rank')
             ->map(fn ($rank) => trim((string) $rank))
             ->filter()
             ->values();
@@ -872,7 +872,7 @@ class SppdDocxExporter
 
         $month = $months[(int) $date->format('n')] ?? $date->format('m');
 
-        return $date->format('j') . ' ' . $month . ' ' . $date->format('Y');
+        return $date->format('d') . ' ' . $month . ' ' . $date->format('Y');
     }
 
     private function formatDayCount(int $dayCount): string
