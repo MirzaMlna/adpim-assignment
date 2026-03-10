@@ -11,7 +11,7 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         $subDivision = SubDivision::firstOrCreate([
-            'name' => 'Sub Bidang Dokumentasi Pimpinan',
+            'name' => 'Dokumentasi Pimpinan',
         ]);
 
         User::updateOrCreate(

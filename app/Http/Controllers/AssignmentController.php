@@ -178,10 +178,14 @@ class AssignmentController extends Controller
         } catch (Throwable $e) {
             report($e);
 
-            return back()->with('error', 'Gagal membuat file SPT/SPPD. Periksa template LEMBAR_SPT.docx atau LEMBAR_SPPD.docx lalu coba lagi.');
+            return back()->with('error', 'Gagal membuat file SPT/SPPD. Periksa template LEMBAR_NOTADINAS.docx, LEMBAR_SPT.docx, LEMBAR_SPT_HIERARKI.docx, atau LEMBAR_SPPD.docx lalu coba lagi.');
         }
 
-        $downloadPrefix = $assignment->region_classification === 'dalam_daerah' ? 'SPT' : 'SPPD';
+        $downloadPrefix = match ($assignment->region_classification) {
+            'dalam_daerah' => 'SPT',
+            'dalam_daerah_kabupaten' => 'SPT-SPPD',
+            default => 'SPPD',
+        };
         $downloadName = $downloadPrefix.'-'.$assignment->code.'.docx';
 
         return response()->download($outputPath, $downloadName)->deleteFileAfterSend(true);
