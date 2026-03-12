@@ -34,7 +34,7 @@
                         {{ __('Your email address is unverified.') }}
 
                         <button form="send-verification"
-                            class="rounded-md text-sm text-cyan-700 underline hover:text-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:ring-offset-2">
+                            class="rounded-md text-sm text-slate-800 underline hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:ring-offset-2">
                             {{ __('Click here to re-send the verification email.') }}
                         </button>
                     </p>

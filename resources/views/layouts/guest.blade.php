@@ -19,7 +19,7 @@
     <div class="min-h-screen flex flex-col items-center justify-center px-4 py-10">
         <div class="mb-6">
             <a href="/" aria-label="Kembali ke beranda">
-                <x-application-logo class="h-16 w-16 fill-current text-cyan-700" />
+                <x-application-logo class="h-16 w-16 fill-current text-slate-800" />
             </a>
         </div>
 

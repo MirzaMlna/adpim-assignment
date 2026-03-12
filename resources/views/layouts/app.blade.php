@@ -18,26 +18,28 @@
 </head>
 
 <body class="font-sans antialiased">
-    <div class="min-h-screen flex flex-col">
+    <div class="min-h-screen">
         @include('layouts.navigation')
 
-        <!-- Page Heading -->
-        @isset($header)
-            <header class="border-b border-slate-200/70 bg-white/70 backdrop-blur">
-                <div class="content-shell py-5 sm:py-6">
-                    {{ $header }}
-                </div>
-            </header>
-        @endisset
+        <div class="flex min-h-screen flex-col lg:pl-72">
+            <!-- Page Heading -->
+            @isset($header)
+                <header class="border-b border-slate-200/70 bg-white/70 backdrop-blur">
+                    <div class="content-shell py-5 sm:py-6">
+                        {{ $header }}
+                    </div>
+                </header>
+            @endisset
 
-        <!-- Page Content -->
-        <main class="flex-1">
-            {{ $slot }}
-        </main>
+            <!-- Page Content -->
+            <main class="flex-1">
+                {{ $slot }}
+            </main>
 
-        <footer class="mt-8 py-5 text-center text-sm text-slate-500">
-            Created by Muhammad Mirza Maulana
-        </footer>
+            <footer class="mt-8 py-5 text-center text-sm text-slate-500">
+                Created by Muhammad Mirza Maulana
+            </footer>
+        </div>
     </div>
 
     @stack('scripts')

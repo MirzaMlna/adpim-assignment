@@ -32,7 +32,7 @@
                 </div>
                 <div class="panel p-5">
                     <p class="mb-2 text-xs uppercase tracking-wide text-slate-500">Anggaran Luar Daerah Kabupaten</p>
-                    <p class="text-2xl font-bold text-sky-700">
+                    <p class="text-2xl font-bold text-slate-800">
                         Rp {{ number_format($budgetByRegion['luar_daerah_kabupaten'] ?? 0, 0, ',', '.') }}
                     </p>
                     <p class="mt-2 text-xs text-slate-500">
