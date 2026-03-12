@@ -21,19 +21,28 @@
                     @method('PUT')
 
                     <div class="form-grid">
+                        @php
+                            $selectedRegion = old('region_classification', $assignment->region_classification);
+                            if ($selectedRegion === 'dalam_daerah_kabupaten') {
+                                $selectedRegion = 'luar_daerah_kabupaten';
+                            }
+
+                            $selectedLocation = old('location', $assignment->location);
+                        @endphp
+
                         <div>
                             <label for="region_classification" class="field-label">Klasifikasi Wilayah</label>
                             <select id="region_classification" name="region_classification" required data-region-select>
                                 <option value="dalam_daerah"
-                                    {{ old('region_classification', $assignment->region_classification) == 'dalam_daerah' ? 'selected' : '' }}>
+                                    {{ $selectedRegion == 'dalam_daerah' ? 'selected' : '' }}>
                                     Dalam Daerah
                                 </option>
-                                <option value="dalam_daerah_kabupaten"
-                                    {{ old('region_classification', $assignment->region_classification) == 'dalam_daerah_kabupaten' ? 'selected' : '' }}>
-                                    Dalam Daerah Kabupaten
+                                <option value="luar_daerah_kabupaten"
+                                    {{ $selectedRegion == 'luar_daerah_kabupaten' ? 'selected' : '' }}>
+                                    Luar Daerah Kabupaten
                                 </option>
                                 <option value="luar_daerah"
-                                    {{ old('region_classification', $assignment->region_classification) == 'luar_daerah' ? 'selected' : '' }}>
+                                    {{ $selectedRegion == 'luar_daerah' ? 'selected' : '' }}>
                                     Luar Daerah
                                 </option>
                             </select>
@@ -42,38 +51,38 @@
                         <div class="hidden" data-region-option="dalam_daerah">
                             <label class="field-label">Wilayah Dalam Daerah</label>
                             <select name="location">
-                                <option value="Banjarmasin"
-                                    {{ old('location', $assignment->location) == 'Banjarmasin' ? 'selected' : '' }}>Kota Banjarmasin</option>
-                                <option value="Banjarbaru"
-                                    {{ old('location', $assignment->location) == 'Banjarbaru' ? 'selected' : '' }}>Kota Banjarbaru</option>
-                                <option value="Banjar"
-                                    {{ old('location', $assignment->location) == 'Banjar' ? 'selected' : '' }}>Kabupaten Banjar</option>
-                                <option value="Barito Kuala"
-                                    {{ old('location', $assignment->location) == 'Barito Kuala' ? 'selected' : '' }}>Kabupaten Barito Kuala</option>
+                                <option value="Kota Banjarmasin"
+                                    {{ in_array($selectedLocation, ['Kota Banjarmasin', 'Banjarmasin']) ? 'selected' : '' }}>Kota Banjarmasin</option>
+                                <option value="Kota Banjarbaru"
+                                    {{ in_array($selectedLocation, ['Kota Banjarbaru', 'Banjarbaru']) ? 'selected' : '' }}>Kota Banjarbaru</option>
+                                <option value="Kab. Banjar"
+                                    {{ in_array($selectedLocation, ['Kab. Banjar', 'Banjar']) ? 'selected' : '' }}>Kab. Banjar</option>
                             </select>
                         </div>
 
-                        <div class="hidden" data-region-option="dalam_daerah_kabupaten">
-                            <label class="field-label">Wilayah Dalam Daerah Kabupaten</label>
+                        <div class="hidden" data-region-option="luar_daerah_kabupaten">
+                            <label class="field-label">Wilayah Luar Daerah Kabupaten</label>
                             <select name="location">
-                                <option value="Hulu Sungai Selatan"
-                                    {{ old('location', $assignment->location) == 'Hulu Sungai Selatan' ? 'selected' : '' }}>Kabupaten Hulu Sungai Selatan</option>
-                                <option value="Hulu Sungai Tengah"
-                                    {{ old('location', $assignment->location) == 'Hulu Sungai Tengah' ? 'selected' : '' }}>Kabupaten Hulu Sungai Tengah</option>
-                                <option value="Hulu Sungai Utara"
-                                    {{ old('location', $assignment->location) == 'Hulu Sungai Utara' ? 'selected' : '' }}>Kabupaten Hulu Sungai Utara</option>
-                                <option value="Balangan"
-                                    {{ old('location', $assignment->location) == 'Balangan' ? 'selected' : '' }}>Kabupaten Balangan</option>
-                                <option value="Kotabaru"
-                                    {{ old('location', $assignment->location) == 'Kotabaru' ? 'selected' : '' }}>Kabupaten Kotabaru</option>
-                                <option value="Tabalong"
-                                    {{ old('location', $assignment->location) == 'Tabalong' ? 'selected' : '' }}>Kabupaten Tabalong</option>
-                                <option value="Tanah Laut"
-                                    {{ old('location', $assignment->location) == 'Tanah Laut' ? 'selected' : '' }}>Kabupaten Tanah Laut</option>
-                                <option value="Tanah Bumbu"
-                                    {{ old('location', $assignment->location) == 'Tanah Bumbu' ? 'selected' : '' }}>Kabupaten Tanah Bumbu</option>
-                                <option value="Tapin"
-                                    {{ old('location', $assignment->location) == 'Tapin' ? 'selected' : '' }}>Kabupaten Tapin</option>
+                                <option value="Kab. Barito Kuala"
+                                    {{ in_array($selectedLocation, ['Kab. Barito Kuala', 'Barito Kuala']) ? 'selected' : '' }}>Kab. Barito Kuala</option>
+                                <option value="Kab. Hulu Sungai Selatan"
+                                    {{ in_array($selectedLocation, ['Kab. Hulu Sungai Selatan', 'Hulu Sungai Selatan']) ? 'selected' : '' }}>Kab. Hulu Sungai Selatan</option>
+                                <option value="Kab. Hulu Sungai Tengah"
+                                    {{ in_array($selectedLocation, ['Kab. Hulu Sungai Tengah', 'Hulu Sungai Tengah']) ? 'selected' : '' }}>Kab. Hulu Sungai Tengah</option>
+                                <option value="Kab. Hulu Sungai Utara"
+                                    {{ in_array($selectedLocation, ['Kab. Hulu Sungai Utara', 'Hulu Sungai Utara']) ? 'selected' : '' }}>Kab. Hulu Sungai Utara</option>
+                                <option value="Kab. Balangan"
+                                    {{ in_array($selectedLocation, ['Kab. Balangan', 'Balangan']) ? 'selected' : '' }}>Kab. Balangan</option>
+                                <option value="Kab. Kotabaru"
+                                    {{ in_array($selectedLocation, ['Kab. Kotabaru', 'Kotabaru']) ? 'selected' : '' }}>Kab. Kotabaru</option>
+                                <option value="Kab. Tabalong"
+                                    {{ in_array($selectedLocation, ['Kab. Tabalong', 'Tabalong']) ? 'selected' : '' }}>Kab. Tabalong</option>
+                                <option value="Kab. Tanah Laut"
+                                    {{ in_array($selectedLocation, ['Kab. Tanah Laut', 'Tanah Laut']) ? 'selected' : '' }}>Kab. Tanah Laut</option>
+                                <option value="Kab. Tanah Bumbu"
+                                    {{ in_array($selectedLocation, ['Kab. Tanah Bumbu', 'Tanah Bumbu']) ? 'selected' : '' }}>Kab. Tanah Bumbu</option>
+                                <option value="Kab. Tapin"
+                                    {{ in_array($selectedLocation, ['Kab. Tapin', 'Tapin']) ? 'selected' : '' }}>Kab. Tapin</option>
                             </select>
                         </div>
 

@@ -34,7 +34,7 @@ class SppdDocxExporter
 
         $notaDinasBodyXml = $this->renderNotaDinasCoverBodyXml($assignment, $users);
 
-        if ($assignment->region_classification === 'dalam_daerah_kabupaten') {
+        if (in_array($assignment->region_classification, ['luar_daerah_kabupaten', 'dalam_daerah_kabupaten', 'luar_daerah'], true)) {
             return $this->exportDalamDaerahKabupatenDocument($assignment, $users, $notaDinasBodyXml);
         }
 
@@ -136,18 +136,19 @@ class SppdDocxExporter
         [$sppdDocumentOpenTag, $sppdTemplateBodyXml, $sppdSectPrXml] = $this->extractTemplateParts($sppdDocumentXml);
         $numberingContext = $this->createNumberingContext(is_string($sppdNumberingXml) ? $sppdNumberingXml : null);
 
-        $pages = [];
+        $leadingPages = [];
         if (trim($notaDinasBodyXml) !== '') {
-            $pages[] = $notaDinasBodyXml;
+            $leadingPages[] = $notaDinasBodyXml;
         }
 
-        $pages[] = $this->renderCombinedSptPage(
+        $leadingPages[] = $this->renderCombinedSptPage(
             $sptDocumentOpenTag,
             $sptTemplateBodyXml,
             $assignment,
             $users
         );
 
+        $sppdPages = [];
         $sheetNumber = 1;
         foreach ($users as $user) {
             $pageXml = $this->renderSinglePage(
@@ -162,11 +163,25 @@ class SppdDocxExporter
                 $pageXml = $this->remapPageNumbering($pageXml, $numberingContext);
             }
 
-            $pages[] = $pageXml;
+            $sppdPages[] = $pageXml;
             $sheetNumber++;
         }
 
-        $bodyInnerXml = implode($this->pageBreakXml(), $pages).$sppdSectPrXml;
+        $bodyInnerXml = '';
+        if ($leadingPages !== []) {
+            $bodyInnerXml = implode($this->pageBreakXml(), $leadingPages);
+        }
+
+        if ($sppdPages !== []) {
+            if ($bodyInnerXml !== '') {
+                $bodyInnerXml .= $this->pageBreakXml();
+            }
+
+            $bodyInnerXml .= $this->composeSppdPagesBodyXml($sppdPages, $sppdSectPrXml);
+        } else {
+            $bodyInnerXml .= $sppdSectPrXml;
+        }
+
         $mergedDocumentXml = preg_replace(
             '/<w:body>.*<\/w:body>/su',
             '<w:body>'.$bodyInnerXml.'</w:body>',
@@ -252,7 +267,9 @@ class SppdDocxExporter
             array_unshift($pages, $coverPageBodyXml);
         }
 
-        $bodyInnerXml = implode($this->pageBreakXml(), $pages).$sectPrXml;
+        $bodyInnerXml = $templateType === self::TEMPLATE_TYPE_SPPD
+            ? $this->composeSppdPagesBodyXml($pages, $sectPrXml)
+            : implode($this->pageBreakXml(), $pages).$sectPrXml;
         $updatedXml = preg_replace(
             '/<w:body>.*<\/w:body>/su',
             '<w:body>'.$bodyInnerXml.'</w:body>',
@@ -330,7 +347,6 @@ class SppdDocxExporter
 
         $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('w', self::WORD_NS);
-        $isOperationalOfficer = $this->isOperationalOfficer($user);
 
         $values = $this->buildReplacementValues($assignment, $user, $sheetNumber);
         $legacyQueue = [
@@ -341,15 +357,6 @@ class SppdDocxExporter
         ];
 
         foreach ($xpath->query('//w:body//w:p') as $paragraph) {
-            $paragraphText = $this->getParagraphText($xpath, $paragraph);
-            if ($this->shouldHideIdentityLineForOperationalOfficer($paragraphText, $isOperationalOfficer)) {
-                if ($paragraph->parentNode) {
-                    $paragraph->parentNode->removeChild($paragraph);
-                }
-
-                continue;
-            }
-
             $this->replaceParagraphPlaceholders($xpath, $paragraph, $values, $legacyQueue);
         }
 
@@ -416,10 +423,11 @@ class SppdDocxExporter
     private function replaceKnownPlaceholders(string $text, array $values): string
     {
         $patterns = [
-            // Handle custom formula in template.
-            // Specific case for signature block: assignment date minus one day.
-            '/\{assignments\s*[-\x{2013}\?]\s*date\}\s*\+\s*\{assignments\s*[-\x{2013}\?]\s*day_count\}\s*[-\x{2013}\x{2212}]\s*1/u' => $values['assignment_issue_date'],
-            '/\{assignments\s*[-\x{2013}\?]\s*date\}\s*\+\s*\{assignments\s*[-\x{2013}\?]\s*day_count\}/u' => $values['assignment_return_date'],
+            // Formula placeholders that appear in updated templates.
+            '/\{assignments\s*[-\x{2013}\?]\s*date\}\s*\+\s*\{assignments\s*[-\x{2013}\?]\s*day_count\s*[-\x{2013}\x{2212}]\s*1\}/u' => $values['assignment_end_date'],
+            '/\{assignments\s*[-\x{2013}\?]\s*date\}\s*\+\s*\{assignments\s*[-\x{2013}\?]\s*day_count\}\s*[-\x{2013}\x{2212}]\s*1/u' => $values['assignment_end_date'],
+            '/\{assignments\s*[-\x{2013}\?]\s*date\}\s*\+\s*\{assignments\s*[-\x{2013}\?]\s*day_count\}/u' => $values['assignment_end_date'],
+            '/\{assignments\s*[-\x{2013}\?]\s*boarding_date\}\s*\+\s*\{assignments\s*[-\x{2013}\?]\s*day_count\s*[-\x{2013}\x{2212}]\s*1\}/u' => $values['assignment_return_date'],
             '/\{assignments\s*[-\x{2013}\?]\s*boarding_date\}\s*\+\s*\{assignments\s*[-\x{2013}\?]\s*day_count\}\s*[-\x{2013}\x{2212}]\s*1/u' => $values['assignment_return_date'],
             '/\{assignments\s*[-\x{2013}\?]\s*boarding_date\}\s*\+\s*\{assignments\s*[-\x{2013}\?]\s*day_count\}/u' => $values['assignment_return_date'],
             '/\{users\s*[-\x{2013}\?]\s*name\}/u' => $values['user_name'],
@@ -430,6 +438,8 @@ class SppdDocxExporter
             '/\{users\s*[-\x{2013}\?]\s*assignment_regulation_level\}/u' => $values['user_assignment_regulation_level'],
             '/\{assignments\s*[-\x{2013}\?]\s*title\}/u' => $values['assignment_title'],
             '/\{assignments\s*[-\x{2013}\?]\s*date\}/u' => $values['assignment_date'],
+            '/\{assignments\s*[-\x{2013}\?]\s*region_classification\}/u' => $values['assignment_region_classification'],
+            '/\{assignments\s*[-\x{2013}\?]\s*region_clasification\}/u' => $values['assignment_region_classification'],
             '/\{assignments\s*[-\x{2013}\?]\s*location_detail\}/u' => $values['assignment_location_detail'],
             '/\{assignments\s*[-\x{2013}\?]\s*location\}/u' => $values['assignment_location'],
             '/\{assignments\s*[-\x{2013}\?]\s*day_count\}/u' => $values['assignment_day_count'],
@@ -437,6 +447,7 @@ class SppdDocxExporter
             '/\{assignments\s*[-\x{2013}\?]\s*boarding_date\}/u' => $values['assignment_boarding_date'],
             '/\{assignments\s*[-\x{2013}\?]\s*return_date\}/u' => $values['assignment_return_date'],
             '/\{assignments\s*[-\x{2013}\?]\s*description\}/u' => $values['assignment_description'],
+            '/\{assignments\s*[-\x{2013}\?]\s*date\s*\(\s*dikurangisatuhari\s*\)\}/u' => $values['assignment_issue_date'],
             '/\{assignments\s*[-\x{2013}\?]\s*date\s*\(\s*dikurangi\s*(?:satu|1)\s*hari\s*\)\}/u' => $values['assignment_issue_date'],
             '/\{sheet_number\}/u' => $values['sheet_number'],
             '/___000\.1\.2\.3/u' => $values['assignment_code'],
@@ -572,6 +583,7 @@ class SppdDocxExporter
             ? $assignment->date->copy()
             : Carbon::parse($assignment->date);
         $dayCount = max(1, (int) $assignment->day_count);
+        $endDateByAssignmentDate = $assignmentDate->copy()->addDays(max(0, $dayCount - 1));
         $boardingDate = $assignment->boarding_date
             ? ($assignment->boarding_date instanceof Carbon
                 ? $assignment->boarding_date->copy()
@@ -589,6 +601,8 @@ class SppdDocxExporter
         return [
             'user_name' => $this->valueOrDash($user?->name),
             'user_nip' => $this->valueOrDash($user?->nip),
+            // Template uses {users - rank} for Pangkat/Gol and {users - job_title} for Jabatan.
+            // Source data stores these values in opposite columns, so map explicitly.
             'user_rank' => $userJobTitleForPangkat,
             'user_job_title' => $userRankForJabatan,
             'user_assignment_regulation_level' => $this->valueOrDash($user?->assignment_regulation_level),
@@ -596,7 +610,9 @@ class SppdDocxExporter
             'assignment_number' => $this->valueOrDash($assignment->code),
             'assignment_title' => $this->valueOrDash($assignment->title),
             'assignment_date' => $this->formatIndonesianDate($assignmentDate),
+            'assignment_end_date' => $this->formatIndonesianDate($endDateByAssignmentDate),
             'assignment_issue_date' => $this->formatIndonesianDate($issueDate),
+            'assignment_region_classification' => $this->formatRegionClassification((string) $assignment->region_classification),
             'assignment_location_detail' => $this->valueOrDash($assignment->location_detail, $assignment->location),
             'assignment_location' => $this->valueOrDash($assignment->location),
             'assignment_day_count' => $this->formatDayCount($dayCount),
@@ -607,6 +623,16 @@ class SppdDocxExporter
             'attendeds_rank_kalsel' => $attendedsRankKalsel,
             'sheet_number' => (string) $sheetNumber,
         ];
+    }
+
+    private function formatRegionClassification(string $value): string
+    {
+        return match ($value) {
+            'dalam_daerah', 'Dalam Daerah' => 'Dalam Daerah',
+            'luar_daerah_kabupaten', 'dalam_daerah_kabupaten', 'Dalam Daerah Kabupaten', 'Luar Daerah Kabupaten' => 'Luar Daerah Kabupaten',
+            'luar_daerah', 'Luar Daerah' => 'Luar Daerah',
+            default => trim($value) !== '' ? $value : '-',
+        };
     }
 
     private function injectSptRecipients(DOMXPath $xpath, Assignment $assignment, Collection $users): void
@@ -669,7 +695,6 @@ class SppdDocxExporter
 
         $nameLocalIndices = [];
         $conditionLocalIndices = [];
-        $blankLocalIndex = null;
         foreach ($recipientParagraphs as $localIndex => $paragraph) {
             if ((bool) preg_match('/\{users\s*[-\x{2013}\?]\s*name\}/u', $paragraph['text'])) {
                 $nameLocalIndices[] = $localIndex;
@@ -677,10 +702,6 @@ class SppdDocxExporter
 
             if ($this->isSptConditionNoteParagraph($xpath, $paragraph['node'], $paragraph['normalized_text'])) {
                 $conditionLocalIndices[] = $localIndex;
-            }
-
-            if ($blankLocalIndex === null && $paragraph['is_empty']) {
-                $blankLocalIndex = $localIndex;
             }
         }
 
@@ -725,10 +746,8 @@ class SppdDocxExporter
             $secondBlockNodes[] = $recipientParagraphs[$idx]['node']->cloneNode(true);
         }
 
-        $separatorNode = null;
-        if (is_int($blankLocalIndex) && isset($recipientParagraphs[$blankLocalIndex])) {
-            $separatorNode = $recipientParagraphs[$blankLocalIndex]['node']->cloneNode(true);
-        }
+        $firstBlockNodes = $this->trimTrailingEmptyParagraphNodes($xpath, $firstBlockNodes);
+        $secondBlockNodes = $this->trimTrailingEmptyParagraphNodes($xpath, $secondBlockNodes);
 
         $insertBeforeNode = $paragraphs[$untukIndex]['node'] ?? null;
         if (! $insertBeforeNode || ! $insertBeforeNode->parentNode) {
@@ -749,11 +768,7 @@ class SppdDocxExporter
                 continue;
             }
 
-            $isOperationalOfficer = $this->isOperationalOfficer($user);
-
-            $templateNodes = $isOperationalOfficer && $secondBlockNodes !== []
-                ? $secondBlockNodes
-                : $firstBlockNodes;
+            $templateNodes = $firstBlockNodes;
 
             if ($templateNodes === []) {
                 $templateNodes = $secondBlockNodes;
@@ -764,17 +779,8 @@ class SppdDocxExporter
 
             foreach ($templateNodes as $templateNode) {
                 $node = $templateNode->cloneNode(true);
-                $nodeText = $this->getParagraphText($xpath, $node);
-                if ($this->shouldHideIdentityLineForOperationalOfficer($nodeText, $isOperationalOfficer)) {
-                    continue;
-                }
-
                 $this->replaceParagraphPlaceholders($xpath, $node, $values, $legacyQueue);
                 $parentNode->insertBefore($node, $insertBeforeNode);
-            }
-
-            if ($userIndex < ($users->count() - 1) && $separatorNode) {
-                $parentNode->insertBefore($separatorNode->cloneNode(true), $insertBeforeNode);
             }
         }
     }
@@ -814,6 +820,32 @@ class SppdDocxExporter
         return $text;
     }
 
+    private function blankParagraphText(DOMXPath $xpath, mixed $paragraphNode): void
+    {
+        $textNodes = $xpath->query('.//w:t', $paragraphNode);
+        if (! $textNodes || $textNodes->length === 0) {
+            return;
+        }
+
+        foreach ($textNodes as $textNode) {
+            $textNode->nodeValue = '';
+        }
+    }
+
+    private function trimTrailingEmptyParagraphNodes(DOMXPath $xpath, array $nodes): array
+    {
+        while ($nodes !== []) {
+            $lastNode = $nodes[count($nodes) - 1];
+            if (trim($this->getParagraphText($xpath, $lastNode)) !== '') {
+                break;
+            }
+
+            array_pop($nodes);
+        }
+
+        return $nodes;
+    }
+
     private function normalizeTextForComparison(string $text): string
     {
         $normalized = preg_replace('/\s+/u', ' ', trim($text)) ?? trim($text);
@@ -843,8 +875,18 @@ class SppdDocxExporter
 
         $hasUserNipPlaceholder = preg_match('/\{users\s*[-\x{2013}\?]\s*nip\}/u', $paragraphText) === 1;
         $hasUserRankPlaceholder = preg_match('/\{users\s*[-\x{2013}\?]\s*rank\}/u', $paragraphText) === 1;
+        $hasUserJobTitlePlaceholder = preg_match('/\{users\s*[-\x{2013}\?]\s*job_title\}/u', $paragraphText) === 1;
+        $hasUserRegulationLevelPlaceholder = preg_match('/\{users\s*[-\x{2013}\?]\s*assignment_regulation_level\}/u', $paragraphText) === 1;
+        $normalizedText = $this->normalizeTextForComparison($paragraphText);
+        $hasSppdIdentityLabel = str_contains($normalizedText, 'pangkat dan golongan')
+            || str_contains($normalizedText, 'jabatan/instansi')
+            || str_contains($normalizedText, 'tingkat menurut peraturan perjalanan');
 
-        return $hasUserNipPlaceholder || $hasUserRankPlaceholder;
+        return $hasUserNipPlaceholder
+            || $hasUserRankPlaceholder
+            || $hasUserJobTitlePlaceholder
+            || $hasUserRegulationLevelPlaceholder
+            || $hasSppdIdentityLabel;
     }
 
     private function resolveTemplate(Assignment $assignment): array
@@ -994,7 +1036,12 @@ class SppdDocxExporter
         $firstUser = $users->first();
         $firstUser = $firstUser instanceof User ? $firstUser : null;
 
-        return $this->buildReplacementValues($assignment, $firstUser, 1);
+        $values = $this->buildReplacementValues($assignment, $firstUser, 1);
+        if (in_array($assignment->region_classification, ['luar_daerah_kabupaten', 'dalam_daerah_kabupaten', 'Dalam Daerah Kabupaten', 'Luar Daerah Kabupaten'], true)) {
+            $values['assignment_region_classification'] = 'LUAR DAERAH';
+        }
+
+        return $values;
     }
 
     private function injectNotaDinasUserRows(DOMXPath $xpath, Assignment $assignment, Collection $users): void
@@ -1136,6 +1183,35 @@ class SppdDocxExporter
     private function pageBreakXml(): string
     {
         return '<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
+    }
+
+    private function composeSppdPagesBodyXml(array $pages, string $sectPrXml): string
+    {
+        if ($pages === []) {
+            return $sectPrXml;
+        }
+
+        if (trim($sectPrXml) === '') {
+            return implode($this->pageBreakXml(), $pages);
+        }
+
+        $chunks = [];
+        $lastIndex = count($pages) - 1;
+
+        foreach ($pages as $index => $pageXml) {
+            $chunks[] = $pageXml;
+
+            if ($index < $lastIndex) {
+                $chunks[] = $this->createSectionBreakParagraphXml($sectPrXml);
+            }
+        }
+
+        return implode('', $chunks).$sectPrXml;
+    }
+
+    private function createSectionBreakParagraphXml(string $sectPrXml): string
+    {
+        return '<w:p><w:pPr>'.$sectPrXml.'</w:pPr></w:p>';
     }
 
     private function createNumberingContext(?string $numberingXml): ?array

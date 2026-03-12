@@ -53,8 +53,8 @@
                                 <td>
                                     @if ($item->region_classification == 'dalam_daerah')
                                         <span class="badge badge-info">Dalam Daerah</span>
-                                    @elseif($item->region_classification == 'dalam_daerah_kabupaten')
-                                        <span class="badge badge-success">Dalam Daerah Kabupaten</span>
+                                    @elseif(in_array($item->region_classification, ['luar_daerah_kabupaten', 'dalam_daerah_kabupaten']))
+                                        <span class="badge badge-success">Luar Daerah Kabupaten</span>
                                     @else
                                         <span class="badge badge-danger">Luar Daerah</span>
                                     @endif

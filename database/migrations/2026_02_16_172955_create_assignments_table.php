@@ -18,7 +18,7 @@ return new class extends Migration {
             $table->string('location');
             $table->string('location_detail')->nullable();
             $table->decimal('fee_per_day', 15, 2)->default(0);
-            $table->enum('region_classification', ['Dalam Daerah', 'Dalam Daerah Kabupaten', 'Luar Daerah'])->default('Dalam Daerah');
+            $table->string('region_classification', 64)->default('dalam_daerah');
             $table->text('description')->nullable();
 
             $table->timestamps();

@@ -26,9 +26,9 @@
                                     {{ old('region_classification', 'dalam_daerah') == 'dalam_daerah' ? 'selected' : '' }}>
                                     Dalam Daerah
                                 </option>
-                                <option value="dalam_daerah_kabupaten"
-                                    {{ old('region_classification') == 'dalam_daerah_kabupaten' ? 'selected' : '' }}>
-                                    Dalam Daerah Kabupaten
+                                <option value="luar_daerah_kabupaten"
+                                    {{ old('region_classification') == 'luar_daerah_kabupaten' ? 'selected' : '' }}>
+                                    Luar Daerah Kabupaten
                                 </option>
                                 <option value="luar_daerah"
                                     {{ old('region_classification') == 'luar_daerah' ? 'selected' : '' }}>
@@ -40,31 +40,53 @@
                         <div class="hidden" data-region-option="dalam_daerah">
                             <label class="field-label">Wilayah Dalam Daerah</label>
                             <select name="location">
-                                <option value="Banjarmasin" {{ old('location') == 'Banjarmasin' ? 'selected' : '' }}>Kota Banjarmasin</option>
-                                <option value="Banjarbaru" {{ old('location') == 'Banjarbaru' ? 'selected' : '' }}>Kota Banjarbaru</option>
-                                <option value="Banjar" {{ old('location') == 'Banjar' ? 'selected' : '' }}>Kabupaten Banjar</option>
-                                <option value="Barito Kuala" {{ old('location') == 'Barito Kuala' ? 'selected' : '' }}>Kabupaten Barito Kuala</option>
+                                <option value="Kota Banjarmasin"
+                                    {{ old('location') == 'Kota Banjarmasin' ? 'selected' : '' }}>Kota Banjarmasin
+                                </option>
+                                <option value="Kota Banjarbaru"
+                                    {{ old('location') == 'Kota Banjarbaru' ? 'selected' : '' }}>Kota Banjarbaru
+                                </option>
+                                <option value="Kab. Banjar" {{ old('location') == 'Kab. Banjar' ? 'selected' : '' }}>
+                                    Kab. Banjar</option>
                             </select>
                         </div>
 
-                        <div class="hidden" data-region-option="dalam_daerah_kabupaten">
-                            <label class="field-label">Wilayah Dalam Daerah Kabupaten</label>
+                        <div class="hidden" data-region-option="luar_daerah_kabupaten">
+                            <label class="field-label">Wilayah Luar Daerah Kabupaten</label>
                             <select name="location">
-                                <option value="Hulu Sungai Selatan" {{ old('location') == 'Hulu Sungai Selatan' ? 'selected' : '' }}>Kabupaten Hulu Sungai Selatan</option>
-                                <option value="Hulu Sungai Tengah" {{ old('location') == 'Hulu Sungai Tengah' ? 'selected' : '' }}>Kabupaten Hulu Sungai Tengah</option>
-                                <option value="Hulu Sungai Utara" {{ old('location') == 'Hulu Sungai Utara' ? 'selected' : '' }}>Kabupaten Hulu Sungai Utara</option>
-                                <option value="Balangan" {{ old('location') == 'Balangan' ? 'selected' : '' }}>Kabupaten Balangan</option>
-                                <option value="Kotabaru" {{ old('location') == 'Kotabaru' ? 'selected' : '' }}>Kabupaten Kotabaru</option>
-                                <option value="Tabalong" {{ old('location') == 'Tabalong' ? 'selected' : '' }}>Kabupaten Tabalong</option>
-                                <option value="Tanah Laut" {{ old('location') == 'Tanah Laut' ? 'selected' : '' }}>Kabupaten Tanah Laut</option>
-                                <option value="Tanah Bumbu" {{ old('location') == 'Tanah Bumbu' ? 'selected' : '' }}>Kabupaten Tanah Bumbu</option>
-                                <option value="Tapin" {{ old('location') == 'Tapin' ? 'selected' : '' }}>Kabupaten Tapin</option>
+                                <option value="Kab. Barito Kuala"
+                                    {{ old('location') == 'Kab. Barito Kuala' ? 'selected' : '' }}>Kab. Barito Kuala
+                                </option>
+                                <option value="Kab. Hulu Sungai Selatan"
+                                    {{ old('location') == 'Kab. Hulu Sungai Selatan' ? 'selected' : '' }}>Kab. Hulu
+                                    Sungai Selatan</option>
+                                <option value="Kab. Hulu Sungai Tengah"
+                                    {{ old('location') == 'Kab. Hulu Sungai Tengah' ? 'selected' : '' }}>Kab. Hulu
+                                    Sungai Tengah</option>
+                                <option value="Kab. Hulu Sungai Utara"
+                                    {{ old('location') == 'Kab. Hulu Sungai Utara' ? 'selected' : '' }}>Kab. Hulu
+                                    Sungai Utara</option>
+                                <option value="Kab. Balangan"
+                                    {{ old('location') == 'Kab. Balangan' ? 'selected' : '' }}>Kab. Balangan</option>
+                                <option value="Kab. Kotabaru"
+                                    {{ old('location') == 'Kab. Kotabaru' ? 'selected' : '' }}>Kab. Kotabaru</option>
+                                <option value="Kab. Tabalong"
+                                    {{ old('location') == 'Kab. Tabalong' ? 'selected' : '' }}>Kab. Tabalong</option>
+                                <option value="Kab. Tanah Laut"
+                                    {{ old('location') == 'Kab. Tanah Laut' ? 'selected' : '' }}>Kab. Tanah Laut
+                                </option>
+                                <option value="Kab. Tanah Bumbu"
+                                    {{ old('location') == 'Kab. Tanah Bumbu' ? 'selected' : '' }}>Kab. Tanah Bumbu
+                                </option>
+                                <option value="Kab. Tapin" {{ old('location') == 'Kab. Tapin' ? 'selected' : '' }}>Kab.
+                                    Tapin</option>
                             </select>
                         </div>
 
                         <div class="hidden" data-region-option="luar_daerah">
                             <label class="field-label">Wilayah Luar Daerah</label>
-                            <input type="text" name="location" value="{{ old('location') }}" placeholder="Nama Provinsi/Kota">
+                            <input type="text" name="location" value="{{ old('location') }}"
+                                placeholder="Nama Provinsi/Kota">
                         </div>
 
                         <div>
@@ -79,7 +101,6 @@
                                 @endforeach
                             </select>
                         </div>
-
                         <div class="md:col-span-2">
                             <label class="field-label">Judul Kegiatan</label>
                             <input type="text" name="title" value="{{ old('title') }}" required>
@@ -112,7 +133,8 @@
 
                         <div>
                             <label class="field-label">Lama Hari</label>
-                            <input type="number" name="day_count" value="{{ old('day_count', 1) }}" min="1" required>
+                            <input type="number" name="day_count" value="{{ old('day_count', 1) }}" min="1"
+                                required>
                         </div>
 
                         <div>
@@ -134,7 +156,8 @@
 
                     <div class="flex justify-end gap-3 pt-2">
                         <a href="{{ route('assignments.index') }}" class="btn btn-secondary">Batal</a>
-                        <button type="submit" class="btn btn-primary" data-loading-text="Menyimpan...">Simpan Data</button>
+                        <button type="submit" class="btn btn-primary" data-loading-text="Menyimpan...">Simpan
+                            Data</button>
                     </div>
                 </form>
             </div>

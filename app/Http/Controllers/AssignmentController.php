@@ -181,9 +181,9 @@ class AssignmentController extends Controller
             return back()->with('error', 'Gagal membuat file SPT/SPPD. Periksa template LEMBAR_NOTADINAS.docx, LEMBAR_SPT.docx, LEMBAR_SPT_HIERARKI.docx, atau LEMBAR_SPPD.docx lalu coba lagi.');
         }
 
-        $downloadPrefix = match ($assignment->region_classification) {
-            'dalam_daerah' => 'SPT',
-            'dalam_daerah_kabupaten' => 'SPT-SPPD',
+        $downloadPrefix = match (true) {
+            $assignment->region_classification === 'dalam_daerah' => 'SPT',
+            in_array($assignment->region_classification, ['luar_daerah_kabupaten', 'dalam_daerah_kabupaten', 'luar_daerah'], true) => 'SPT-SPPD',
             default => 'SPPD',
         };
         $downloadName = $downloadPrefix.'-'.$assignment->code.'.docx';
@@ -306,7 +306,7 @@ class AssignmentController extends Controller
             'location_detail' => 'nullable|string|max:255',
             'fee_per_day' => 'required|numeric|min:0',
             'description' => 'nullable|string',
-            'region_classification' => 'required|in:dalam_daerah,dalam_daerah_kabupaten,luar_daerah',
+            'region_classification' => 'required|in:dalam_daerah,luar_daerah_kabupaten,luar_daerah',
         ];
     }
 

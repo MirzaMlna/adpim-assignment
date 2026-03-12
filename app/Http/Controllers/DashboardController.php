@@ -67,10 +67,10 @@ class DashboardController extends Controller
             ->join('users', 'assignment_users.user_id', '=', 'users.id')
             ->where('users.role', 'STAFF')
             ->whereBetween('assignments.date', [$monthStart->toDateString(), $monthEnd->toDateString()])
-            ->whereIn('assignments.region_classification', ['dalam_daerah', 'dalam_daerah_kabupaten'])
+            ->whereIn('assignments.region_classification', ['dalam_daerah', 'luar_daerah_kabupaten'])
             ->select(['assignment_users.user_id', 'users.name'])
             ->selectRaw("SUM(CASE WHEN assignments.region_classification = 'dalam_daerah' THEN assignments.fee_per_day * assignments.day_count ELSE 0 END) as income_dalam_daerah")
-            ->selectRaw("SUM(CASE WHEN assignments.region_classification = 'dalam_daerah_kabupaten' THEN assignments.fee_per_day * assignments.day_count ELSE 0 END) as income_dalam_daerah_kabupaten")
+            ->selectRaw("SUM(CASE WHEN assignments.region_classification = 'luar_daerah_kabupaten' THEN assignments.fee_per_day * assignments.day_count ELSE 0 END) as income_luar_daerah_kabupaten")
             ->groupBy('assignment_users.user_id', 'users.name')
             ->get()
             ->keyBy('user_id');
@@ -82,14 +82,14 @@ class DashboardController extends Controller
             ->map(function (User $staff) use ($incomeRows) {
                 $income = $incomeRows->get($staff->id);
                 $incomeDalamDaerah = (float) ($income->income_dalam_daerah ?? 0);
-                $incomeDalamDaerahKabupaten = (float) ($income->income_dalam_daerah_kabupaten ?? 0);
+                $incomeLuarDaerahKabupaten = (float) ($income->income_luar_daerah_kabupaten ?? 0);
 
                 return (object) [
                     'user_id' => $staff->id,
                     'name' => $staff->name,
                     'income_dalam_daerah' => $incomeDalamDaerah,
-                    'income_dalam_daerah_kabupaten' => $incomeDalamDaerahKabupaten,
-                    'total_income' => $incomeDalamDaerah + $incomeDalamDaerahKabupaten,
+                    'income_luar_daerah_kabupaten' => $incomeLuarDaerahKabupaten,
+                    'total_income' => $incomeDalamDaerah + $incomeLuarDaerahKabupaten,
                 ];
             })
             ->sortByDesc('total_income')
@@ -186,7 +186,7 @@ class DashboardController extends Controller
     {
         return [
             'dalam_daerah' => 'Dalam Daerah',
-            'dalam_daerah_kabupaten' => 'Dalam Daerah Kabupaten',
+            'luar_daerah_kabupaten' => 'Luar Daerah Kabupaten',
             'luar_daerah' => 'Luar Daerah',
         ];
     }

@@ -31,9 +31,9 @@
                     </p>
                 </div>
                 <div class="panel p-5">
-                    <p class="mb-2 text-xs uppercase tracking-wide text-slate-500">Anggaran Dalam Daerah Kabupaten</p>
+                    <p class="mb-2 text-xs uppercase tracking-wide text-slate-500">Anggaran Luar Daerah Kabupaten</p>
                     <p class="text-2xl font-bold text-sky-700">
-                        Rp {{ number_format($budgetByRegion['dalam_daerah_kabupaten'] ?? 0, 0, ',', '.') }}
+                        Rp {{ number_format($budgetByRegion['luar_daerah_kabupaten'] ?? 0, 0, ',', '.') }}
                     </p>
                     <p class="mt-2 text-xs text-slate-500">
                         Luar daerah: Rp {{ number_format($budgetByRegion['luar_daerah'] ?? 0, 0, ',', '.') }}
@@ -109,7 +109,7 @@
 
             <div class="panel p-6">
                 <h3 class="mb-4 text-lg font-semibold text-slate-900">
-                    Pendapatan Staff Bulan Ini (Dalam Daerah dan Dalam Daerah Kabupaten)
+                    Pendapatan Staff Bulan Ini (Dalam Daerah dan Luar Daerah Kabupaten)
                 </h3>
                 <div class="overflow-x-auto">
                     <table class="table-ui">
@@ -118,7 +118,7 @@
                                 <th>No</th>
                                 <th>Nama Staff</th>
                                 <th class="text-right">Dalam Daerah</th>
-                                <th class="text-right">Dalam Daerah Kabupaten</th>
+                                <th class="text-right">Luar Daerah Kabupaten</th>
                                 <th class="text-right">Total</th>
                             </tr>
                         </thead>
@@ -128,7 +128,7 @@
                                     <td>{{ $index + 1 }}</td>
                                     <td class="font-semibold text-slate-900">{{ $row->name }}</td>
                                     <td class="text-right">Rp {{ number_format($row->income_dalam_daerah, 0, ',', '.') }}</td>
-                                    <td class="text-right">Rp {{ number_format($row->income_dalam_daerah_kabupaten, 0, ',', '.') }}</td>
+                                    <td class="text-right">Rp {{ number_format($row->income_luar_daerah_kabupaten, 0, ',', '.') }}</td>
                                     <td class="text-right font-bold text-slate-900">Rp {{ number_format($row->total_income, 0, ',', '.') }}</td>
                                 </tr>
                             @empty

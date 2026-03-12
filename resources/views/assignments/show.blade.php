@@ -41,8 +41,8 @@
                         <p class="font-semibold text-slate-900">
                             @if ($assignment->region_classification == 'dalam_daerah')
                                 Dalam Daerah
-                            @elseif($assignment->region_classification == 'dalam_daerah_kabupaten')
-                                Dalam Daerah Kabupaten
+                            @elseif(in_array($assignment->region_classification, ['luar_daerah_kabupaten', 'dalam_daerah_kabupaten']))
+                                Luar Daerah Kabupaten
                             @else
                                 Luar Daerah
                             @endif
