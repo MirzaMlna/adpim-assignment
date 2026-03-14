@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AppliesMonthDateFilters;
 use App\Models\Assignment;
 use App\Models\AssignmentUser;
 use App\Models\User;
@@ -12,17 +13,26 @@ use Throwable;
 
 class AssignmentUserController extends Controller
 {
-    public function index()
+    use AppliesMonthDateFilters;
+
+    public function index(Request $request)
     {
-        $assignments = Assignment::query()
+        $filters = $this->resolveMonthDateFilters($request);
+
+        $assignmentsQuery = Assignment::query()
             ->with([
                 'assignmentUsers.user:id,name',
                 'attendeds:id,rank_abbreviation',
-            ])
-            ->latest('date')
-            ->paginate(10);
+            ]);
 
-        return view('assignment-users.index', compact('assignments'));
+        $this->applyMonthDateFilters($assignmentsQuery, $filters, 'date');
+
+        $assignments = $assignmentsQuery
+            ->latest('date')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('assignment-users.index', compact('assignments', 'filters'));
     }
 
     public function create(Request $request)

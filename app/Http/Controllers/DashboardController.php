@@ -2,21 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AppliesMonthDateFilters;
 use App\Models\Assignment;
 use App\Models\AssignmentUser;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function index(): View
+    use AppliesMonthDateFilters;
+
+    public function index(Request $request): View
     {
-        $monthStart = now()->startOfMonth();
-        $monthEnd = now()->endOfMonth();
+        $filters = $this->resolveMonthDateFilters($request, now()->format('Y-m'));
+        $monthStart = $filters['month_start'] ?? now()->startOfMonth();
+        $monthEnd = $filters['month_end'] ?? $monthStart->copy()->endOfMonth();
         $regionLabels = $this->regionLabels();
-        $cacheKey = 'dashboard:summary:'.$monthStart->format('Y-m');
+        $cacheKey = 'dashboard:summary:'.$monthStart->format('Y-m').':'.($filters['date'] ?? 'all');
 
         $cachedData = Cache::get($cacheKey);
         if (is_array($cachedData)) {
@@ -27,11 +32,10 @@ class DashboardController extends Controller
         $totalStaff = (clone $staffBaseQuery)->count();
         $activeStaff = (clone $staffBaseQuery)->where('is_active', true)->count();
 
-        $monthlyTopRows = AssignmentUser::query()
+        $monthlyTopRowsQuery = AssignmentUser::query()
             ->join('assignments', 'assignment_users.assignment_id', '=', 'assignments.id')
             ->join('users', 'assignment_users.user_id', '=', 'users.id')
             ->where('users.role', 'STAFF')
-            ->whereBetween('assignments.date', [$monthStart->toDateString(), $monthEnd->toDateString()])
             ->select([
                 'assignments.region_classification',
                 'assignment_users.user_id',
@@ -41,8 +45,10 @@ class DashboardController extends Controller
             ->groupBy('assignments.region_classification', 'assignment_users.user_id', 'users.name')
             ->orderBy('assignments.region_classification')
             ->orderByDesc('total_assignments')
-            ->orderBy('users.name')
-            ->get();
+            ->orderBy('users.name');
+
+        $this->applyMonthDateFilters($monthlyTopRowsQuery, $filters, 'assignments.date');
+        $monthlyTopRows = $monthlyTopRowsQuery->get();
 
         $topStaffByRegion = [];
         foreach ($regionLabels as $regionKey => $regionLabel) {
@@ -62,16 +68,18 @@ class DashboardController extends Controller
                 ->values();
         }
 
-        $incomeRows = AssignmentUser::query()
+        $incomeRowsQuery = AssignmentUser::query()
             ->join('assignments', 'assignment_users.assignment_id', '=', 'assignments.id')
             ->join('users', 'assignment_users.user_id', '=', 'users.id')
             ->where('users.role', 'STAFF')
-            ->whereBetween('assignments.date', [$monthStart->toDateString(), $monthEnd->toDateString()])
             ->whereIn('assignments.region_classification', ['dalam_daerah', 'luar_daerah_kabupaten'])
             ->select(['assignment_users.user_id', 'users.name'])
             ->selectRaw("SUM(CASE WHEN assignments.region_classification = 'dalam_daerah' THEN assignments.fee_per_day * assignments.day_count ELSE 0 END) as income_dalam_daerah")
             ->selectRaw("SUM(CASE WHEN assignments.region_classification = 'luar_daerah_kabupaten' THEN assignments.fee_per_day * assignments.day_count ELSE 0 END) as income_luar_daerah_kabupaten")
-            ->groupBy('assignment_users.user_id', 'users.name')
+            ->groupBy('assignment_users.user_id', 'users.name');
+
+        $this->applyMonthDateFilters($incomeRowsQuery, $filters, 'assignments.date');
+        $incomeRows = $incomeRowsQuery
             ->get()
             ->keyBy('user_id');
 
@@ -95,10 +103,9 @@ class DashboardController extends Controller
             ->sortByDesc('total_income')
             ->values();
 
-        $monthlyAssignments = Assignment::query()
-            ->withCount('assignmentUsers')
-            ->whereBetween('date', [$monthStart->toDateString(), $monthEnd->toDateString()])
-            ->get(['id', 'date', 'fee_per_day', 'day_count', 'region_classification']);
+        $monthlyAssignmentsQuery = Assignment::query()->withCount('assignmentUsers');
+        $this->applyMonthDateFilters($monthlyAssignmentsQuery, $filters, 'date');
+        $monthlyAssignments = $monthlyAssignmentsQuery->get(['id', 'date', 'fee_per_day', 'day_count', 'region_classification']);
 
         $budgetByRegion = collect(array_fill_keys(array_keys($regionLabels), 0.0));
         $monthlyBudgetTotal = 0.0;
@@ -163,7 +170,9 @@ class DashboardController extends Controller
             ->values();
 
         $viewData = [
-            'periodLabel' => $monthStart->translatedFormat('F Y'),
+            'periodLabel' => $filters['date']
+                ? Carbon::createFromFormat('Y-m-d', $filters['date'])->translatedFormat('d F Y')
+                : $monthStart->translatedFormat('F Y'),
             'totalStaff' => $totalStaff,
             'activeStaff' => $activeStaff,
             'topStaffByRegion' => $topStaffByRegion,
@@ -175,6 +184,7 @@ class DashboardController extends Controller
             'monthlyAssignmentUserCount' => $assignmentUserCount,
             'yearNow' => $yearNow,
             'monthlyBudgetTable' => $monthlyBudgetTable,
+            'filters' => $filters,
         ];
 
         Cache::put($cacheKey, $viewData, now()->addMinutes(5));

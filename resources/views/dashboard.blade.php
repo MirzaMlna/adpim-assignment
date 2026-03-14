@@ -10,6 +10,9 @@
         <div class="content-shell">
             <x-flash-alerts />
 
+            <x-month-date-filter :month="$filters['month']" :date="$filters['date']" title="Filter Dashboard"
+                description="Dashboard default ke bulan berjalan. Pilih tanggal bila ingin melihat ringkasan pada hari tertentu." />
+
             <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <div class="panel p-5">
                     <p class="mb-2 text-xs uppercase tracking-wide text-slate-500">Jumlah Staff</p>
@@ -17,14 +20,14 @@
                     <p class="mt-2 text-xs text-slate-500">Aktif: {{ number_format($activeStaff, 0, ',', '.') }}</p>
                 </div>
                 <div class="panel p-5">
-                    <p class="mb-2 text-xs uppercase tracking-wide text-slate-500">Penugasan Bulan Ini</p>
+                    <p class="mb-2 text-xs uppercase tracking-wide text-slate-500">Penugasan Periode Terpilih</p>
                     <p class="text-3xl font-bold text-slate-900">{{ number_format($monthlyAssignmentCount, 0, ',', '.') }}</p>
                     <p class="mt-2 text-xs text-slate-500">
                         Total personel ditugaskan: {{ number_format($monthlyAssignmentUserCount, 0, ',', '.') }}
                     </p>
                 </div>
                 <div class="panel p-5">
-                    <p class="mb-2 text-xs uppercase tracking-wide text-slate-500">Anggaran Bulan Ini</p>
+                    <p class="mb-2 text-xs uppercase tracking-wide text-slate-500">Anggaran Periode Terpilih</p>
                     <p class="text-2xl font-bold text-emerald-700">Rp {{ number_format($monthlyBudgetTotal, 0, ',', '.') }}</p>
                     <p class="mt-2 text-xs text-slate-500">
                         Dalam daerah: Rp {{ number_format($budgetByRegion['dalam_daerah'] ?? 0, 0, ',', '.') }}
@@ -109,7 +112,7 @@
 
             <div class="panel p-6">
                 <h3 class="mb-4 text-lg font-semibold text-slate-900">
-                    Pendapatan Staff Bulan Ini (Dalam Daerah dan Luar Daerah Kabupaten)
+                    Pendapatan Staff Pada Periode Terpilih (Dalam Daerah dan Luar Daerah Kabupaten)
                 </h3>
                 <div class="overflow-x-auto">
                     <table class="table-ui">

@@ -13,6 +13,9 @@
         <div class="content-shell">
             <x-flash-alerts />
 
+            <x-month-date-filter :month="$filters['month']" :date="$filters['date']" title="Filter Penugasan"
+                description="Tampilkan penugasan berdasarkan bulan, lalu sempitkan lagi ke tanggal giat tertentu." />
+
             <div class="table-shell">
                 <table class="table-ui">
                     <thead>

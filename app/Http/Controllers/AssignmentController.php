@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AppliesMonthDateFilters;
 use App\Models\Assignment;
 use App\Models\Attended;
 use App\Services\SppdDocxExporter;
@@ -14,17 +15,26 @@ use Throwable;
 
 class AssignmentController extends Controller
 {
-    public function index()
+    use AppliesMonthDateFilters;
+
+    public function index(Request $request)
     {
-        $assignments = Assignment::query()
+        $filters = $this->resolveMonthDateFilters($request);
+
+        $assignmentsQuery = Assignment::query()
             ->with([
                 'attendeds:id,rank_abbreviation',
                 'assignmentUsers:id,assignment_id',
-            ])
-            ->latest('date')
-            ->paginate(10);
+            ]);
 
-        return view('assignments.index', compact('assignments'));
+        $this->applyMonthDateFilters($assignmentsQuery, $filters, 'date');
+
+        $assignments = $assignmentsQuery
+            ->latest('date')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('assignments.index', compact('assignments', 'filters'));
     }
 
     public function create()

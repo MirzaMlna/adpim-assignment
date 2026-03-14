@@ -13,6 +13,9 @@
         <div class="content-shell">
             <x-flash-alerts />
 
+            <x-month-date-filter :month="$filters['month']" :date="$filters['date']" title="Filter Data Giat"
+                description="Filter data giat per bulan, lalu pilih tanggal spesifik di dalam bulan tersebut bila diperlukan." />
+
             <div class="table-shell">
                 <table class="table-ui">
                     <thead>
