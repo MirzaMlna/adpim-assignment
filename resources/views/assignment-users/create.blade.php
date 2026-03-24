@@ -11,7 +11,7 @@
             <x-flash-alerts />
 
             <div class="panel p-6 sm:p-8">
-                <form method="POST" action="{{ route('assignment-users.store') }}" class="space-y-6">
+                <form method="POST" action="{{ route('assignment-users.store') }}" class="space-y-6" autocomplete="off">
                     @csrf
 
                     <div>

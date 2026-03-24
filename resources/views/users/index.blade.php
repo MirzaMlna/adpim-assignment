@@ -15,7 +15,7 @@
 
             <div class="panel mb-4 p-4 sm:p-5">
                 <form action="{{ route('users.import') }}" method="POST" enctype="multipart/form-data"
-                    class="flex flex-col gap-3 md:flex-row md:items-end">
+                    class="flex flex-col gap-3 md:flex-row md:items-end" autocomplete="off">
                     @csrf
                     <div class="w-full md:min-w-[360px]">
                         <label class="field-label">Import User (XLSX)</label>
@@ -66,7 +66,7 @@
                                             Edit
                                         </a>
                                         <form action="{{ route('users.destroy', $user->id) }}" method="POST"
-                                            data-confirm="Yakin hapus data user ini?">
+                                            data-confirm="Yakin hapus data user ini?" autocomplete="off">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-danger px-3 py-1.5 text-xs"

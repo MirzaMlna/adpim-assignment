@@ -188,7 +188,7 @@ class AssignmentController extends Controller
         } catch (Throwable $e) {
             report($e);
 
-            return back()->with('error', 'Gagal membuat file SPT/SPPD. Periksa template LEMBAR_NOTADINAS.docx, LEMBAR_SPT.docx, LEMBAR_SPT_HIERARKI.docx, atau LEMBAR_SPPD.docx lalu coba lagi.');
+            return back()->with('error', 'Gagal membuat file SPT/SPPD. Periksa template LEMBAR_NPD.docx, LEMBAR_NOTADINAS.docx, LEMBAR_SPT.docx, LEMBAR_SPT_HIERARKI.docx, atau LEMBAR_SPPD.docx lalu coba lagi.');
         }
 
         $downloadPrefix = match (true) {

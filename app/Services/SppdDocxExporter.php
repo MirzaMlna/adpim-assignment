@@ -38,6 +38,10 @@ class SppdDocxExporter
             return $this->exportDalamDaerahKabupatenDocument($assignment, $users, $notaDinasBodyXml);
         }
 
+        if ($assignment->region_classification === 'dalam_daerah') {
+            return $this->exportDalamDaerahDocument($assignment, $users, $notaDinasBodyXml);
+        }
+
         [$templatePath, $templateType, $templateDisplayName] = $this->resolveTemplate($assignment);
         if (! File::exists($templatePath)) {
             throw new RuntimeException("Template {$templateDisplayName} tidak ditemukan di root project.");
@@ -86,6 +90,103 @@ class SppdDocxExporter
         if (is_string($mergedNumberingXml) && $mergedNumberingXml !== '') {
             $outputZip->addFromString('word/numbering.xml', $mergedNumberingXml);
         }
+        $outputZip->close();
+
+        return $outputPath;
+    }
+
+    private function exportDalamDaerahDocument(
+        Assignment $assignment,
+        Collection $users,
+        string $notaDinasBodyXml
+    ): string {
+        [$sptPath, $sptDisplayName] = $this->resolveSptTemplate();
+        [$sptHierarkiPath, $sptHierarkiDisplayName] = $this->resolveSptHierarkiTemplate();
+
+        if (! File::exists($sptPath)) {
+            throw new RuntimeException("Template {$sptDisplayName} tidak ditemukan di root project.");
+        }
+
+        if (! File::exists($sptHierarkiPath)) {
+            throw new RuntimeException("Template {$sptHierarkiDisplayName} tidak ditemukan di root project.");
+        }
+
+        $sptZip = new ZipArchive;
+        if ($sptZip->open($sptPath) !== true) {
+            throw new RuntimeException("Template {$sptDisplayName} tidak dapat dibuka.");
+        }
+
+        $sptDocumentXml = $sptZip->getFromName('word/document.xml');
+        $sptZip->close();
+
+        if (! is_string($sptDocumentXml) || trim($sptDocumentXml) === '') {
+            throw new RuntimeException("Isi template {$sptDisplayName} tidak valid.");
+        }
+
+        $sptHierarkiZip = new ZipArchive;
+        if ($sptHierarkiZip->open($sptHierarkiPath) !== true) {
+            throw new RuntimeException("Template {$sptHierarkiDisplayName} tidak dapat dibuka.");
+        }
+
+        $sptHierarkiDocumentXml = $sptHierarkiZip->getFromName('word/document.xml');
+        $sptHierarkiZip->close();
+
+        if (! is_string($sptHierarkiDocumentXml) || trim($sptHierarkiDocumentXml) === '') {
+            throw new RuntimeException("Isi template {$sptHierarkiDisplayName} tidak valid.");
+        }
+
+        [$sptDocumentOpenTag, $sptTemplateBodyXml] = $this->extractTemplateParts($sptDocumentXml);
+        [$sptHierarkiDocumentOpenTag, $sptHierarkiTemplateBodyXml, $sptHierarkiSectPrXml] = $this->extractTemplateParts($sptHierarkiDocumentXml);
+
+        $pages = [];
+        if (trim($notaDinasBodyXml) !== '') {
+            $pages[] = $notaDinasBodyXml;
+        }
+
+        $pages[] = $this->renderCombinedSptPage(
+            $sptHierarkiDocumentOpenTag,
+            $sptHierarkiTemplateBodyXml,
+            $assignment,
+            $users
+        );
+
+        $pages[] = $this->renderCombinedSptPage(
+            $sptDocumentOpenTag,
+            $sptTemplateBodyXml,
+            $assignment,
+            $users
+        );
+
+        $bodyInnerXml = implode($this->pageBreakXml(), $pages).$sptHierarkiSectPrXml;
+        $mergedDocumentXml = preg_replace(
+            '/<w:body>.*<\/w:body>/su',
+            '<w:body>'.$bodyInnerXml.'</w:body>',
+            $sptHierarkiDocumentXml,
+            1,
+            $replaceCount
+        );
+
+        if (! is_string($mergedDocumentXml) || $replaceCount !== 1) {
+            throw new RuntimeException('Konten dokumen SPT gagal dibuat.');
+        }
+
+        $tempDir = storage_path('app/tmp');
+        File::ensureDirectoryExists($tempDir);
+
+        $safeCode = Str::slug((string) $assignment->code ?: 'assignment');
+        $fileName = 'spt-'.$safeCode.'-'.now()->format('YmdHis').'.docx';
+        $outputPath = $tempDir.DIRECTORY_SEPARATOR.$fileName;
+
+        if (! copy($sptHierarkiPath, $outputPath)) {
+            throw new RuntimeException('Gagal menyalin template SPT hierarki.');
+        }
+
+        $outputZip = new ZipArchive;
+        if ($outputZip->open($outputPath) !== true) {
+            throw new RuntimeException('File SPT hasil tidak dapat dibuka.');
+        }
+
+        $outputZip->addFromString('word/document.xml', $mergedDocumentXml);
         $outputZip->close();
 
         return $outputPath;
@@ -423,6 +524,8 @@ class SppdDocxExporter
     private function replaceKnownPlaceholders(string $text, array $values): string
     {
         $patterns = [
+            '/\{assignments\s*[-\x{2013}\?]\s*date\}\s*s\s*(?:\/|\.)\s*d\.?\s*\{assignments\s*[-\x{2013}\?]\s*date\}\s*\+\s*\{assignments\s*[-\x{2013}\?]\s*day_count\s*[-\x{2013}\x{2212}]\s*1\}\s*\{years\s*[-\x{2013}\?]\s*now\(\)\}/u' => $values['assignment_date_period'],
+            '/\{assignments\s*[-\x{2013}\?]\s*date\}\s*s\s*(?:\/|\.)\s*d\.?\s*\{assignments\s*[-\x{2013}\?]\s*date\}\s*\+\s*\{assignments\s*[-\x{2013}\?]\s*day_count\}\s*[-\x{2013}\x{2212}]\s*1\}\s*\{years\s*[-\x{2013}\?]\s*now\(\)\}/u' => $values['assignment_date_period'],
             // Formula placeholders that appear in updated templates.
             '/\{assignments\s*[-\x{2013}\?]\s*date\}\s*\+\s*\{assignments\s*[-\x{2013}\?]\s*day_count\s*[-\x{2013}\x{2212}]\s*1\}/u' => $values['assignment_end_date'],
             '/\{assignments\s*[-\x{2013}\?]\s*date\}\s*\+\s*\{assignments\s*[-\x{2013}\?]\s*day_count\}\s*[-\x{2013}\x{2212}]\s*1/u' => $values['assignment_end_date'],
@@ -449,6 +552,7 @@ class SppdDocxExporter
             '/\{assignments\s*[-\x{2013}\?]\s*description\}/u' => $values['assignment_description'],
             '/\{assignments\s*[-\x{2013}\?]\s*date\s*\(\s*dikurangisatuhari\s*\)\}/u' => $values['assignment_issue_date'],
             '/\{assignments\s*[-\x{2013}\?]\s*date\s*\(\s*dikurangi\s*(?:satu|1)\s*hari\s*\)\}/u' => $values['assignment_issue_date'],
+            '/\{years\s*[-\x{2013}\?]\s*now\(\)\}/u' => $values['assignment_period_year'],
             '/\{sheet_number\}/u' => $values['sheet_number'],
             '/___000\.1\.2\.3/u' => $values['assignment_code'],
             '/________\/ADPIM\/2025/u' => $values['assignment_number'],
@@ -610,7 +714,9 @@ class SppdDocxExporter
             'assignment_number' => $this->valueOrDash($assignment->code),
             'assignment_title' => $this->valueOrDash($assignment->title),
             'assignment_date' => $this->formatIndonesianDate($assignmentDate),
+            'assignment_date_period' => $this->formatAssignmentDatePeriod($assignmentDate, $endDateByAssignmentDate, $dayCount),
             'assignment_end_date' => $this->formatIndonesianDate($endDateByAssignmentDate),
+            'assignment_period_year' => $endDateByAssignmentDate->format('Y'),
             'assignment_issue_date' => $this->formatIndonesianDate($issueDate),
             'assignment_region_classification' => $this->formatRegionClassification((string) $assignment->region_classification),
             'assignment_location_detail' => $this->valueOrDash($assignment->location_detail, $assignment->location),
@@ -1017,6 +1123,8 @@ class SppdDocxExporter
     private function resolveNotaDinasTemplate(): array
     {
         $candidates = [
+            ['file' => 'LEMBAR_NPD.docx', 'label' => 'LEMBAR_NPD.docx'],
+            ['file' => 'LEMBAR NPD.docx', 'label' => 'LEMBAR NPD.docx'],
             ['file' => 'LEMBAR_NOTADINAS.docx', 'label' => 'LEMBAR_NOTADINAS.docx'],
             ['file' => 'LEMBAR NOTADINAS.docx', 'label' => 'LEMBAR NOTADINAS.docx'],
         ];
@@ -1028,7 +1136,7 @@ class SppdDocxExporter
             }
         }
 
-        return [base_path('LEMBAR_NOTADINAS.docx'), 'LEMBAR_NOTADINAS.docx'];
+        return [base_path('LEMBAR_NPD.docx'), 'LEMBAR_NPD.docx'];
     }
 
     private function buildCoverReplacementValues(Assignment $assignment, Collection $users): array
@@ -1369,6 +1477,48 @@ class SppdDocxExporter
         $month = $months[(int) $date->format('n')] ?? $date->format('m');
 
         return $date->format('d').' '.$month.' '.$date->format('Y');
+    }
+
+    private function formatAssignmentDatePeriod(Carbon $startDate, Carbon $endDate, int $dayCount): string
+    {
+        if ($dayCount <= 1 || $startDate->isSameDay($endDate)) {
+            return $this->formatIndonesianDate($startDate);
+        }
+
+        if ($startDate->format('Y') !== $endDate->format('Y')) {
+            return $this->formatIndonesianDate($startDate).' s.d '.$this->formatIndonesianDate($endDate);
+        }
+
+        return $this->formatIndonesianDateWithoutYear($startDate)
+            .' s.d '
+            .$this->formatIndonesianDate($endDate);
+    }
+
+    private function formatIndonesianDateWithoutYear(mixed $value): string
+    {
+        if ($value === null || $value === '') {
+            return '-';
+        }
+
+        $date = $value instanceof Carbon ? $value : Carbon::parse($value);
+        $months = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember',
+        ];
+
+        $month = $months[(int) $date->format('n')] ?? $date->format('m');
+
+        return $date->format('d').' '.$month;
     }
 
     private function formatDayCount(int $dayCount): string

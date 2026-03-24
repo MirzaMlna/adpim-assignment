@@ -12,7 +12,7 @@
 
             <div class="panel p-6 sm:p-8">
                 <form method="POST" action="{{ route('assignment-users.update', $assignment_user->id) }}"
-                    class="space-y-6">
+                    class="space-y-6" autocomplete="off">
                     @csrf
                     @method('PUT')
 

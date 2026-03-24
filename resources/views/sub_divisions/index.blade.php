@@ -34,7 +34,7 @@
                                             Edit
                                         </a>
                                         <form action="{{ route('sub-divisions.destroy', $item->id) }}" method="POST"
-                                            data-confirm="Yakin hapus data sub bagian ini?">
+                                            data-confirm="Yakin hapus data sub bagian ini?" autocomplete="off">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-danger px-3 py-1.5 text-xs"

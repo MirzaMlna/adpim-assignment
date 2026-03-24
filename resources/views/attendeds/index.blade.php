@@ -37,7 +37,7 @@
                                         </a>
 
                                         <form action="{{ route('attendeds.destroy', $item->id) }}" method="POST"
-                                            data-confirm="Yakin hapus data pimpinan ini?">
+                                            data-confirm="Yakin hapus data pimpinan ini?" autocomplete="off">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-danger px-3 py-1.5 text-xs"

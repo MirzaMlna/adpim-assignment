@@ -42,7 +42,7 @@
         return `${this.selectedMonth}-${String(lastDay).padStart(2, '0')}`;
     }
 }" class="filter-shell mb-4">
-    <form method="GET" action="{{ url()->current() }}"
+    <form method="GET" action="{{ url()->current() }}" autocomplete="off"
         class="flex flex-col gap-4 p-4 sm:p-5 xl:flex-row xl:items-center xl:justify-between">
         <div class="flex items-start gap-3">
             <div

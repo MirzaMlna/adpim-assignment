@@ -100,7 +100,7 @@
                     <i class="bi bi-gear"></i>
                     Profil
                 </a>
-                <form method="POST" action="{{ route('logout') }}">
+                <form method="POST" action="{{ route('logout') }}" autocomplete="off">
                     @csrf
                     <button type="submit" class="app-sidebar-link w-full text-rose-700 hover:bg-rose-50">
                         <i class="bi bi-box-arrow-right"></i>
@@ -208,7 +208,7 @@
                         <i class="bi bi-gear"></i>
                         Profil
                     </a>
-                    <form method="POST" action="{{ route('logout') }}">
+                    <form method="POST" action="{{ route('logout') }}" autocomplete="off">
                         @csrf
                         <button type="submit" class="app-sidebar-link w-full text-rose-700 hover:bg-rose-50">
                             <i class="bi bi-box-arrow-right"></i>

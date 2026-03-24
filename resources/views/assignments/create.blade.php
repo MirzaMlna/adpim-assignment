@@ -15,7 +15,7 @@
             <x-flash-alerts />
 
             <div class="panel p-6 sm:p-8">
-                <form action="{{ route('assignments.store') }}" method="POST" class="space-y-6" data-region-form>
+                <form action="{{ route('assignments.store') }}" method="POST" class="space-y-6" data-region-form autocomplete="off">
                     @csrf
 
                     <div class="form-grid">

@@ -11,7 +11,7 @@
             <x-flash-alerts />
 
             <div class="panel p-6 sm:p-8">
-                <form action="{{ route('sub-divisions.store') }}" method="POST" class="space-y-6">
+                <form action="{{ route('sub-divisions.store') }}" method="POST" class="space-y-6" autocomplete="off">
                     @csrf
 
                     <div>

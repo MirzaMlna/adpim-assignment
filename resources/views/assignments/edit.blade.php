@@ -16,7 +16,7 @@
 
             <div class="panel p-6 sm:p-8">
                 <form action="{{ route('assignments.update', $assignment->id) }}" method="POST" class="space-y-6"
-                    data-region-form>
+                    data-region-form autocomplete="off">
                     @csrf
                     @method('PUT')
 

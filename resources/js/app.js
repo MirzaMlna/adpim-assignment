@@ -7,6 +7,51 @@ window.Alpine = Alpine;
 
 Alpine.start();
 
+const disableFormAutofill = () => {
+    const applyAutofillGuards = (root = document) => {
+        if (!(root instanceof Document || root instanceof HTMLElement)) {
+            return;
+        }
+
+        root.querySelectorAll('form').forEach((form) => {
+            form.setAttribute('autocomplete', 'off');
+
+            form.querySelectorAll('input, textarea, select').forEach((field) => {
+                if (
+                    field instanceof HTMLButtonElement ||
+                    field instanceof HTMLInputElement && ['hidden', 'checkbox', 'radio', 'file', 'submit'].includes(field.type)
+                ) {
+                    return;
+                }
+
+                field.setAttribute('autocomplete', 'off');
+            });
+        });
+    };
+
+    applyAutofillGuards();
+
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (!(node instanceof HTMLElement)) {
+                    return;
+                }
+
+                if (node.matches('form, input, textarea, select')) {
+                    applyAutofillGuards(node.closest('form') ?? node);
+
+                    return;
+                }
+
+                applyAutofillGuards(node);
+            });
+        });
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+};
+
 const initializeConfirmForms = () => {
     document.addEventListener('submit', (event) => {
         const form = event.target;
@@ -130,6 +175,7 @@ const initializeTomSelect = async () => {
 };
 
 const initializeUI = async () => {
+    disableFormAutofill();
     initializeConfirmForms();
     initializeSubmitLoadingState();
     initializeRegionFields();

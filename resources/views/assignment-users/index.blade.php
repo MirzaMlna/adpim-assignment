@@ -72,7 +72,7 @@
                                                 </a>
 
                                                 <form action="{{ route('assignment-users.destroy', $assignmentUser->id) }}"
-                                                    method="POST" data-confirm="Hapus data penugasan ini?">
+                                                    method="POST" data-confirm="Hapus data penugasan ini?" autocomplete="off">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn btn-danger px-3 py-1.5 text-xs"

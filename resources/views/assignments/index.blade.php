@@ -94,7 +94,7 @@
                                                 Edit
                                             </a>
                                             <form action="{{ route('assignments.destroy', $item->id) }}" method="POST"
-                                                class="w-full" data-confirm="Hapus data giat ini?">
+                                                class="w-full" data-confirm="Hapus data giat ini?" autocomplete="off">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit"
